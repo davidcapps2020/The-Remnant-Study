@@ -1,12 +1,12 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Remnant Study - Prophetic Timeline</title>
-    <!-- Tailwind CSS for modern styling -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React and Babel for running React in a single HTML file -->
+    <!-- React and Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -14,21 +14,22 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; padding: 0; overflow: hidden; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        .stagger-track { height: 300px; }
+        .sticky-axis { position: sticky; top: 0; z-index: 50; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect, useRef, useMemo } = React;
 
         // --- VERSION CONTROL ---
-        const version = "v2.1.0 GitHub Final";
+        const version = "v2.2.3 Historicist Alignment Final";
+        const OFFICIAL_URL = "https://theremnantstudy.netlify.app/";
 
         // --- CUSTOM SDA THREE ANGELS ICON ---
         const ThreeAngelsIcon = ({ size = 24, className = "" }) => (
@@ -44,7 +45,6 @@
           </svg>
         );
 
-        // Lucide proxy to handle icons within React
         const Icon = ({ name, size = 16, className = "" }) => {
             return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
         };
@@ -54,20 +54,52 @@
         const getBibleLink = (ref) => `https://www.biblegateway.com/passage/?search=${encodeURIComponent(ref)}&version=KJV`;
         const getEGWLink = (bookId, segment) => `https://m.egwwritings.org/en/book/${bookId}.${segment}#${segment}`;
 
-        // --- MASTER DATA ---
+        // --- MASTER DATA: FULL SYMBOLS ---
         const symbolDecoder = [
-          { symbol: "Angel", meaning: "Messenger of God.", bible: "Daniel 8:16; 9:21; Luke 1:19, 26; Heb 1:14", cat: "Entities" },
-          { symbol: "Ark of Testimony", meaning: "Mercy seat where God dwells.", bible: "Exo 25:10-22; Psa 80:1", cat: "Sanctuary" },
-          { symbol: "Babylon", meaning: "Religious apostasy and confusion.", bible: "Gen 10:8-10; 11:6-9; Rev 17:1-5", cat: "Entities" },
-          { symbol: "Beast", meaning: "Kingdom, government, or political power.", bible: "Daniel 7:23", cat: "Entities" },
-          { symbol: "Dragon", meaning: "Satan or his agency (Pagan Rome).", bible: "Isa 27:1; Rev 12:7-9", cat: "Entities" },
-          { symbol: "Harlot", meaning: "Apostate church or religion.", bible: "Isaiah 1:21; Jer 3:1-3", cat: "Entities" },
-          { symbol: "Lamb", meaning: "Jesus; the Sacrifice for sin.", bible: "John 1:29; 1 Cor 5:7", cat: "Entities" },
-          { symbol: "White", meaning: "Purity and victory.", bible: "Psalm 51:7; Isaiah 1:18", cat: "Colors" },
-          { symbol: "Waters", meaning: "People, nations, tongues.", bible: "Rev 17:15", cat: "Nature" },
-          { symbol: "Wings", meaning: "Speed and protection.", bible: "Exodus 19:4; Hab 1:6", cat: "Nature" },
-          { symbol: "Sword", meaning: "Bloodshed and destruction.", bible: "Isaiah 3:25", cat: "Objects" },
-          { symbol: "Gold", meaning: "Faith and scripture.", bible: "Psalm 19:7-10; Jam 2:5", cat: "Objects" }
+            { symbol: "Angel", meaning: "Messenger of God.", bible: "Dan 8:16; 9:21; Luke 1:19", cat: "Entities" },
+            { symbol: "Ark of Testimony", meaning: "Mercy seat where God dwells.", bible: "Exo 25:10-22; Psa 80:1", cat: "Sanctuary" },
+            { symbol: "Babylon", meaning: "Religious apostasy and confusion.", bible: "Gen 11:6-9; Rev 17:1-5", cat: "Entities" },
+            { symbol: "Balaam, doctrine of", meaning: "Compromise and idolatry for gain.", bible: "Num 22:5-25; Rev 2:14", cat: "Entities" },
+            { symbol: "Beast", meaning: "Kingdom, government, or political power.", bible: "Daniel 7:23", cat: "Entities" },
+            { symbol: "Binding of Satan", meaning: "Chain of circumstances/Earth's desolation.", bible: "Isa 14:12-20; Rev 20:1-3", cat: "Entities" },
+            { symbol: "Dragon", meaning: "Satan or his agency (Pagan Rome).", bible: "Isa 27:1; Rev 12:7-9", cat: "Entities" },
+            { symbol: "Egypt", meaning: "Symbol of atheism and rebellion.", bible: "Exo 5:2; Rev 11:8", cat: "Entities" },
+            { symbol: "False Prophet", meaning: "Apostate Protestantism.", bible: "Rev 16:13-14; 19:20", cat: "Entities" },
+            { symbol: "Harlot", meaning: "Apostate church or religion.", bible: "Isa 1:21; Rev 17:1-5", cat: "Entities" },
+            { symbol: "Israel", meaning: "True followers of Christ.", bible: "Rom 9:6-8; Gal 3:29", cat: "Entities" },
+            { symbol: "Lamb", meaning: "Jesus; the Sacrifice for sin.", bible: "John 1:29; Rev 5:6", cat: "Entities" },
+            { symbol: "Lion", meaning: "Strength; Jesus as King.", bible: "Gen 49:9; Rev 5:5", cat: "Entities" },
+            { symbol: "Pure Woman", meaning: "The True Church.", bible: "Jer 6:2; 2 Cor 11:2", cat: "Entities" },
+            { symbol: "Serpent", meaning: "Satan.", bible: "Rev 12:9; 20:2", cat: "Entities" },
+            { symbol: "Black", meaning: "Moral darkness, sin, apostasy.", bible: "Acts 26:18; Rev 6:5", cat: "Colors" },
+            { symbol: "Blood", meaning: "Life or bloodshed.", bible: "Lev 17:11; Rev 6:12", cat: "Nature" },
+            { symbol: "Bottomless Pit", meaning: "Earth in chaos and desolation.", bible: "Gen 1:1-2; Rev 20:1", cat: "Nature" },
+            { symbol: "Eagle", meaning: "Speed, power, and protection.", bible: "Deut 28:49; Rev 12:14", cat: "Nature" },
+            { symbol: "Earth", meaning: "Sparsely populated area.", bible: "Rev 12:16", cat: "Nature" },
+            { symbol: "Four Corners", meaning: "Four directions of the compass.", bible: "Jer 49:36", cat: "Nature" },
+            { symbol: "Horse", meaning: "Battle or angelic agencies.", bible: "Zec 6:1-8; Rev 6:2", cat: "Nature" },
+            { symbol: "Moon", meaning: "Ceremonial types and shadows.", bible: "Heb 10:1; Rev 12:1", cat: "Nature" },
+            { symbol: "Mountains", meaning: "Political powers or kingdoms.", bible: "Dan 2:35, 44", cat: "Nature" },
+            { symbol: "Red", meaning: "Sin, corruption, and persecution.", bible: "Isa 1:18; Rev 6:4", cat: "Colors" },
+            { symbol: "Stars", meaning: "Angels or ministers.", bible: "Rev 1:16, 20; 12:4", cat: "Nature" },
+            { symbol: "Sun", meaning: "Jesus and the Gospel light.", bible: "John 9:5; Mal 4:2", cat: "Nature" },
+            { symbol: "Waters", meaning: "People, nations, tongues.", bible: "Rev 17:15", cat: "Nature" },
+            { symbol: "White", meaning: "Purity and victory.", bible: "Isa 1:18; Rev 6:2", cat: "Colors" },
+            { symbol: "Winds", meaning: "Strife, war, and commotion.", bible: "Jer 49:36", cat: "Nature" },
+            { symbol: "Wine", meaning: "False doctrine or Blood of Atonement.", bible: "Jer 25:15; Mat 26:21", cat: "Nature" },
+            { symbol: "Wings", meaning: "Speed and protection.", bible: "Exo 19:4; Hab 1:6", cat: "Nature" },
+            { symbol: "Bow", meaning: "Success in spiritual battle.", bible: "Psa 7:11-12; Rev 6:2", cat: "Objects" },
+            { symbol: "Crowns", meaning: "Kingship and victory.", bible: "Jam 1:12; Rev 2:10", cat: "Objects" },
+            { symbol: "Door", meaning: "Opportunity or probation.", bible: "Luke 13:24; Rev 3:20", cat: "Objects" },
+            { symbol: "Gold", meaning: "Faith and scripture.", bible: "Psa 19:7-10; Jam 2:5", cat: "Objects" },
+            { symbol: "Incense", meaning: "Prayers of the saints.", bible: "Psa 141:2; Rev 8:3", cat: "Sanctuary" },
+            { symbol: "Keys", meaning: "Jurisdiction and control.", bible: "Mat 16:19", cat: "Objects" },
+            { symbol: "Oil", meaning: "The Holy Spirit.", bible: "Zec 4:2-6; Mat 25:1-13", cat: "Sanctuary" },
+            { symbol: "Sickle", meaning: "Harvest/End of the world.", bible: "Mat 13:39; Rev 14:14", cat: "Objects" },
+            { symbol: "Sword", meaning: "Bloodshed or Word of God.", bible: "Isa 3:25; Heb 4:12", cat: "Objects" },
+            { symbol: "Seal", meaning: "Sabbath/Ownership sign.", bible: "Eze 20:12; Rev 7:2", cat: "Markers" },
+            { symbol: "Day", meaning: "Prophetic literal year.", bible: "Eze 4:6; Num 14:34", cat: "Time" },
+            { symbol: "Time", meaning: "Prophetic year (360 days).", bible: "Dan 7:25; Rev 12:6", cat: "Time" }
         ];
 
         const plagueData = [
@@ -81,9 +113,9 @@
         ];
 
         const angelMessages = [
-          { id: 'am1', name: "1st Message", start: 1831, end: 1844, color: "blue", bible: "Revelation 14:6-7", desc: "Everlasting Gospel.", egw: "The first angel's message was designed to separate the professed people of God from the corrupting influences of the world. - GC 379", link: getEGWLink(132, 1714), trackPos: 'top' },
-          { id: 'am2', name: "2nd Message", start: 1844, end: 1888, color: "amber", bible: "Revelation 14:8", desc: "Babylon is Fallen.", egw: "The second angel's message was first preached in the summer of 1844. - GC 389", link: "https://m.egwwritings.org/en/book/14648.2#0", trackPos: 'mid' },
-          { id: 'am3', name: "3rd Message", start: 1844.5, end: 2150, color: "rose", bible: "Revelation 14:9-12", desc: "Mark of the Beast Warning.", egw: "The third angel's message is to be the great final warning to be given to the world. - GC 604", link: getEGWLink(132, 2727), trackPos: 'low' }
+          { id: 'am1', name: "1st Message", start: 1831, end: 1844, color: "blue", bible: "Revelation 14:6-7", desc: "Everlasting Gospel; Judgment is Come.", egw: "Designed to separate the people from worldly influence. - GC 379", link: getEGWLink(132, 1714), trackPos: 'top' },
+          { id: 'am2', name: "2nd Message", start: 1844, end: 1888, color: "amber", bible: "Revelation 14:8", desc: "Babylon is Fallen.", egw: "First preached in the summer of 1844. - GC 389", link: "https://m.egwwritings.org/en/book/14648.2#0", trackPos: 'mid' },
+          { id: 'am3', name: "3rd Message", start: 1844.5, end: 2150, color: "rose", bible: "Revelation 14:9-12", desc: "Warning against Mark of the Beast.", egw: "The great final warning to be given to the world. - GC 604", link: getEGWLink(132, 2727), trackPos: 'low' }
         ];
 
         const timelineData = [
@@ -107,7 +139,8 @@
           { name: "1st Seal", start: 31, end: 100, label: "White Horse" },
           { name: "2nd Seal", start: 100, end: 313, label: "Red Horse" },
           { name: "3rd Seal", start: 313, end: 538, label: "Black Horse" },
-          { name: "4th Seal", start: 538, end: 1517, label: "Pale Horse" }
+          { name: "4th Seal", start: 538, end: 1517, label: "Pale Horse" },
+          { name: "5th Seal", start: 1517, end: 1755, label: "Martyrs" }
         ];
 
         const trumpetEras = [
@@ -123,29 +156,34 @@
             const [searchQuery, setSearchQuery] = useState("");
             const [showCopyFeedback, setShowCopyFeedback] = useState(false);
 
+            const shareText = "The Remnant Study - Exploring Adventist Prophetic History and the Final Crisis.";
+
             useEffect(() => {
-                lucide.createIcons();
-            }, [viewMode, selectedEvent]);
+                if (window.lucide) { window.lucide.createIcons(); }
+            }, [viewMode, selectedEvent, searchQuery]);
 
             const copyToClipboard = () => {
-                const url = window.location.href;
                 const el = document.createElement('textarea');
-                el.value = url;
-                document.body.appendChild(el);
-                el.select();
+                el.value = OFFICIAL_URL;
+                document.body.appendChild(el); el.select();
                 document.execCommand('copy');
                 document.body.removeChild(el);
                 setShowCopyFeedback(true);
                 setTimeout(() => setShowCopyFeedback(false), 2000);
             };
 
+            const filteredSymbols = useMemo(() => {
+                return symbolDecoder.filter(s => 
+                    s.symbol.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                    s.meaning.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+            }, [searchQuery]);
+
             const renderTimeline = () => (
                 <div className="h-full flex flex-col overflow-hidden relative">
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
-                        <div className="overflow-x-auto custom-scrollbar border-b border-slate-800">
-                            <div style={{ width: '2400px' }} className="relative bg-slate-950 pb-12">
-                                
-                                {/* FLOATING DATE AXIS */}
+                        <div className="overflow-x-auto custom-scrollbar border-b border-slate-800 bg-slate-950">
+                            <div style={{ width: '2400px' }} className="relative pb-12">
                                 <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-xl">
                                     <div className="relative h-12 w-full flex items-end">
                                         {Array.from({ length: 30 }).map((_, i) => {
@@ -156,61 +194,31 @@
                                                 </div>
                                             );
                                         })}
-                                        <div className="absolute h-12 border-l-2 border-amber-500/40 flex items-end pl-1 z-0" style={{ left: `${getX(1844)}%` }}>
-                                            <span className="text-[11px] font-black text-amber-500 uppercase pb-1">1844</span>
-                                        </div>
+                                        <div className="absolute h-12 border-l-2 border-amber-500/40 flex items-end pl-1 z-0" style={{ left: `${getX(1844)}%` }}><span className="text-[11px] font-black text-amber-500 uppercase pb-1">1844</span></div>
                                     </div>
                                 </div>
+                                <div className="p-8 bg-slate-950 border-b border-slate-800"><h2 className="text-xl font-black text-white uppercase mb-6 flex items-center gap-2"><Icon name="clock" size={20}/> Grand Panorama</h2><div className="relative h-24"><div className="absolute top-1/2 -translate-y-1/2 w-full h-1 bg-slate-900"></div>{timelineData.map(e => (<button key={e.id} onClick={() => setSelectedEvent({...e, spiritOfProphecy: "Refer to The Great Controversy."})} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 p-2 bg-slate-900 border-2 border-amber-500 rounded-full hover:scale-125 transition-all z-10 shadow-lg" style={{ left: `${getX(e.year)}%` }}><Icon name={e.icon} size={16} className="text-amber-500" /><span className="absolute top-10 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-black bg-slate-800 px-2 py-0.5 rounded border border-slate-700">{e.label}</span></button>))}</div></div>
+                                <div className="p-8 bg-slate-900/20 border-b border-slate-800"><h2 className="text-xl font-black text-blue-400 uppercase mb-6 flex items-center gap-2"><ThreeAngelsIcon size={20}/> Three Angels Messages</h2><div className="relative h-48">{angelMessages.map(am => { const vPos = am.trackPos === 'top' ? 'top-[5%]' : am.trackPos === 'mid' ? 'top-[35%]' : 'top-[65%]'; const colorStyles = am.color === 'blue' ? 'bg-blue-600/20 border-blue-500/40 text-blue-300' : am.color === 'amber' ? 'bg-amber-600/20 border-amber-500/40 text-amber-300' : 'bg-rose-600/20 border-rose-500/40 text-rose-300'; return (<button key={am.id} onClick={() => setSelectedEvent({...am, title: am.name, description: am.desc, spiritOfProphecy: am.egw, egwLink: am.link})} className={`absolute ${vPos} h-12 border-2 rounded-2xl flex items-center justify-center px-6 z-20 transition-all hover:brightness-125 ${colorStyles}`} style={{ left: `${getX(am.start)}%`, width: `${getX(am.end) - getX(am.start)}%` }}><span className="text-xs font-black uppercase tracking-widest truncate">{am.name}</span></button>); })}<div className="absolute top-0 bottom-0 w-px bg-slate-800 border-l border-dashed border-slate-700" style={{ left: `${getX(1844)}%` }}></div></div></div>
                                 
-                                {/* Track 1: Grand Panorama */}
-                                <div className="p-8 bg-slate-950 border-b border-slate-800">
-                                    <h2 className="text-xl font-black text-white uppercase mb-6 flex items-center gap-2"><Icon name="clock" size={20}/> Grand Panorama</h2>
-                                    <div className="relative h-24">
-                                        <div className="absolute top-1/2 -translate-y-1/2 w-full h-1 bg-slate-900"></div>
-                                        {timelineData.map(e => (
-                                            <button key={e.id} onClick={() => setSelectedEvent({...e, spiritOfProphecy: "Refer to The Great Controversy."})} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 p-2 bg-slate-900 border-2 border-amber-500 rounded-full hover:scale-125 transition-all z-10" style={{ left: `${getX(e.year)}%` }}>
-                                                <Icon name={e.icon} size={16} className="text-amber-500" />
-                                                <span className="absolute top-10 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-black bg-slate-800 px-2 py-0.5 rounded border border-slate-700">{e.label}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Track 2: Three Angels Track - STAGGERED */}
-                                <div className="p-8 bg-slate-900/20 border-b border-slate-800">
-                                    <h2 className="text-xl font-black text-blue-400 uppercase mb-6 flex items-center gap-2"><ThreeAngelsIcon size={20}/> Three Angels Messages</h2>
-                                    <div className="relative h-48">
-                                        {angelMessages.map(am => {
-                                            const vPos = am.trackPos === 'top' ? 'top-[5%]' : am.trackPos === 'mid' ? 'top-[35%]' : 'top-[65%]';
-                                            return (
-                                                <button key={am.id} onClick={() => setSelectedEvent({...am, title: am.name, description: am.desc, spiritOfProphecy: am.egw, egwLink: am.link})} className={`absolute ${vPos} h-12 border-2 rounded-2xl flex items-center justify-center px-6 z-20 transition-all hover:brightness-125
-                                                    ${am.color === 'blue' ? 'bg-blue-600/20 border-blue-500/40 text-blue-300' : 
-                                                      am.color === 'amber' ? 'bg-amber-600/20 border-amber-500/40 text-amber-300' : 
-                                                      'bg-red-600/20 border-red-500/40 text-red-300'}`} style={{ left: `${getX(am.start)}%`, width: `${getX(am.end) - getX(am.start)}%` }}>
-                                                    <span className="text-xs font-black uppercase tracking-widest truncate">{am.name}</span>
-                                                </button>
-                                            );
-                                        })}
-                                        <div className="absolute top-0 bottom-0 w-px bg-slate-800 border-l border-dashed border-slate-700" style={{ left: `${getX(1844)}%` }}></div>
-                                    </div>
-                                </div>
-
-                                {/* Track 3: Historicist Alignment - STAGGERED */}
+                                {/* Historicist Eras - RESTORED WOES AND SEALS */}
                                 <div className="p-8 bg-slate-950">
                                     <h2 className="text-xl font-black text-emerald-500 uppercase mb-6 flex items-center gap-2"><Icon name="layers" size={20}/> Historicist Eras</h2>
                                     <div className="relative h-[320px]">
+                                        {/* Church Eras */}
                                         {churchEras.map((ce, i) => (
-                                            <button key={ce.name} className="absolute h-8 bg-emerald-500/10 border border-emerald-500/30 rounded-lg flex items-center justify-center text-[9px] font-black text-emerald-400 uppercase px-2 truncate" style={{ left: `${getX(ce.start)}%`, width: `${getX(ce.end) - getX(ce.start)}%`, top: i % 2 === 0 ? '10px' : '50px' }}>
+                                            <button key={ce.name} onClick={() => setSelectedEvent({title: ce.name, description: "One of the Seven Churches.", spiritOfProphecy: "Refer to Revelation 2 & 3."})} className="absolute h-8 bg-emerald-500/10 border border-emerald-500/30 rounded-lg flex items-center justify-center text-[9px] font-black text-emerald-400 uppercase px-2 truncate hover:bg-emerald-500/20 transition-all" style={{ left: `${getX(ce.start)}%`, width: `${getX(ce.end) - getX(ce.start)}%`, top: i % 2 === 0 ? '10px' : '50px' }}>
                                                 {ce.name}
                                             </button>
                                         ))}
+                                        {/* Seal Eras */}
                                         {sealEras.map((se, i) => (
-                                            <button key={se.name} className="absolute h-8 bg-rose-500/10 border border-rose-500/30 rounded-lg flex items-center justify-center text-[9px] font-black text-rose-400 uppercase px-2 truncate" style={{ left: `${getX(se.start)}%`, width: `${getX(se.end) - getX(se.start)}%`, top: '120px' }}>
+                                            <button key={se.name} onClick={() => setSelectedEvent({title: se.name, label: se.label, description: "One of the Seven Seals.", spiritOfProphecy: "Refer to Revelation 6."})} className="absolute h-8 bg-rose-500/10 border border-rose-500/30 rounded-lg flex items-center justify-center text-[9px] font-black text-rose-400 uppercase px-2 truncate hover:bg-rose-500/20 transition-all" style={{ left: `${getX(se.start)}%`, width: `${getX(se.end) - getX(se.start)}%`, top: '110px' }}>
                                                 {se.label}
                                             </button>
                                         ))}
+                                        {/* Trumpet Eras (Woes) */}
                                         {trumpetEras.map((te, i) => (
-                                            <button key={te.name} className="absolute h-8 bg-indigo-500/10 border border-indigo-500/30 rounded-lg flex items-center justify-center text-[9px] font-black text-indigo-400 uppercase px-2 truncate" style={{ left: `${getX(te.start)}%`, width: `${getX(te.end) - getX(te.start)}%`, top: '230px' }}>
+                                            <button key={te.name} onClick={() => setSelectedEvent({title: te.name, label: te.label, description: "One of the Seven Trumpets.", spiritOfProphecy: "Refer to Revelation 8 & 9."})} className="absolute h-8 bg-indigo-500/10 border border-indigo-500/30 rounded-lg flex items-center justify-center text-[9px] font-black text-indigo-400 uppercase px-2 truncate hover:bg-indigo-500/20 transition-all" style={{ left: `${getX(te.start)}%`, width: `${getX(te.end) - getX(te.start)}%`, top: i % 2 === 0 ? '210px' : '250px' }}>
                                                 {te.label}
                                             </button>
                                         ))}
@@ -218,25 +226,41 @@
                                 </div>
                             </div>
                         </div>
+                        <div className="p-8 bg-gradient-to-b from-red-950/20 to-slate-950 border-t border-slate-800"><h2 className="text-2xl font-black text-red-600 uppercase mb-12 flex items-center gap-3"><Icon name="alert-triangle" size={24}/> The Seven Vials</h2><div className="overflow-x-auto custom-scrollbar pb-6"><div className="flex items-center gap-6 min-w-max px-4">{plagueData.map((p, i) => (<button key={p.id} onClick={() => setSelectedEvent({...p, title: p.label, description: p.title, spiritOfProphecy: "The vial judgments fell upon those who worshiped the beast. - GC 627"})} className="flex flex-col items-center gap-4 group w-32 transition-transform hover:-translate-y-2"><div className="relative p-6 bg-slate-900 border-2 border-red-600/50 rounded-[2rem] hover:border-red-500 transition-all shadow-xl"><Icon name={p.icon} size={32} className="text-red-500" /><div className="absolute -top-3 -right-3 bg-red-600 text-white text-[10px] font-black w-8 h-8 rounded-full flex items-center justify-center border-4 border-slate-950">{i + 1}</div></div><span className="text-[10px] font-black text-red-500 uppercase tracking-widest">{p.label}</span></button>))}</div></div></div>
+                    </div>
+                </div>
+            );
 
-                        {/* Seven Vials - Decoupled Track */}
-                        <div className="p-8 bg-gradient-to-b from-red-950/20 to-slate-950 border-t border-slate-800">
-                            <h2 className="text-2xl font-black text-red-600 uppercase mb-12">The Seven Vials</h2>
-                            <div className="overflow-x-auto custom-scrollbar pb-6">
-                                <div className="flex items-center gap-6 min-w-max px-4">
-                                    {plagueData.map((p, i) => (
-                                        <button key={p.id} onClick={() => setSelectedEvent({...p, title: p.label, description: p.title, spiritOfProphecy: "The vial judgments fell upon those who worshiped the beast. - GC 627"})} className="flex flex-col items-center gap-4 group w-32">
-                                            <div className="relative p-6 bg-slate-900 border-2 border-red-600/50 rounded-[2rem] hover:scale-110 hover:border-red-500 transition-all shadow-xl">
-                                                <Icon name={p.icon} size={32} className="text-red-500" />
-                                                <div className="absolute -top-3 -right-3 bg-red-600 text-white text-[10px] font-black w-8 h-8 rounded-full flex items-center justify-center border-4 border-slate-950">{i + 1}</div>
-                                            </div>
-                                            <span className="text-[10px] font-black text-red-500 uppercase">{p.label}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+            const renderSabbath = () => (
+                <div className="h-full p-8 max-w-7xl mx-auto overflow-y-auto custom-scrollbar pb-32 animate-in fade-in">
+                    <div className="flex justify-between items-end mb-12 border-b border-amber-900/30 pb-6"><div><h2 className="text-4xl font-black text-white uppercase tracking-tighter flex items-center gap-4"><Icon name="calendar" size={40} className="text-amber-500" /> The Sabbath Hub</h2><p className="text-slate-500 text-xs font-black uppercase tracking-[0.3em] mt-1 italic">The Seal of God & The Final Test</p></div></div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+                        <button onClick={() => setSelectedEvent({ title: "Memorial of Creation", label: "Origin", bible: "Genesis 2:1-3", description: "The Sabbath was hallowed at creation as a perpetual memorial of God's power and ownership as the Creator of the universe.", spiritOfProphecy: "The Sabbath was hallowed at the creation. - PP 48", egwLink: getEGWLink(84, 117) })} className="bg-slate-900 p-8 rounded-[3rem] border border-slate-800 shadow-2xl hover:border-amber-500 transition-all text-left"><div className="flex items-center gap-4 mb-6"><div className="p-4 bg-amber-500/10 rounded-2xl text-amber-500"><Icon name="sun" size={32} /></div><h3 className="text-xl font-black text-white uppercase">Creation</h3></div><p className="text-slate-400 text-sm leading-relaxed mb-8">The original rest day established by the Creator.</p><div className="flex items-center text-amber-500 font-black text-xs uppercase tracking-widest">Study <Icon name="chevron-right" className="ml-2"/></div></button>
+                        <button onClick={() => setSelectedEvent({ title: "The Seal of God", label: "Identity", bible: "Ezekiel 20:12", description: "The Sabbath is the specific sign between God and His people, containing His Name, Title, and Territory.", spiritOfProphecy: "The sign, or seal, of God is revealed in the observance of the seventh-day Sabbath. - TM 446", egwLink: getEGWLink(132, 1960) })} className="bg-slate-900 p-8 rounded-[3rem] border border-slate-800 shadow-2xl hover:border-blue-500 transition-all text-left"><div className="flex items-center gap-4 mb-6"><div className="p-4 bg-blue-600/10 rounded-2xl text-blue-500"><Icon name="shield-check" size={32} /></div><h3 className="text-xl font-black text-white uppercase">The Seal</h3></div><p className="text-slate-400 text-sm leading-relaxed mb-8">The mark of loyalty to the true Living God.</p><div className="flex items-center text-blue-400 font-black text-xs uppercase tracking-widest">Study <Icon name="chevron-right" className="ml-2"/></div></button>
+                        <button onClick={() => setSelectedEvent({ title: "The Final Test", label: "Conflict", bible: "Revelation 14:12", description: "In the closing scenes, the Sabbath will be the point upon which the great final test of loyalty turns.", spiritOfProphecy: "The Sabbath will be the great test of loyalty... When the final test shall be brought to bear upon men, then the line of distinction will be drawn. - GC 605", egwLink: getEGWLink(132, 2727) })} className="bg-slate-900 p-8 rounded-[3rem] border border-slate-800 shadow-2xl hover:border-red-500 transition-all text-left"><div className="flex items-center gap-4 mb-6"><div className="p-4 bg-red-600/10 rounded-2xl text-red-500"><Icon name="gavel" size={32} /></div><h3 className="text-xl font-black text-white uppercase">Final Test</h3></div><p className="text-slate-400 text-sm leading-relaxed mb-8">The deciding point in the closing scenes of history.</p><div className="flex items-center text-red-500 font-black text-xs uppercase tracking-widest">Study <Icon name="chevron-right" className="ml-2"/></div></button>
+                    </div>
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-4 mb-8"><Icon name="library" size={24} className="text-blue-400"/><h3 className="text-2xl font-black text-white uppercase tracking-widest">EGW Study Resources</h3><div className="h-px flex-1 bg-slate-800"></div></div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {[
+                                { title: "PP: Creation", book: "84", segment: "117", desc: "Chapter 2: The institution of the Sabbath in Eden." },
+                                { title: "GC: God's Law Immutable", book: "132", segment: "1960", desc: "Chapter 25: The specific link to God's Law." },
+                                { title: "GC: The Final Warning", book: "132", segment: "2727", desc: "Chapter 38: The Loud Cry and the last message." }
+                            ].map((res, i) => (
+                                <a key={i} href={getEGWLink(res.book, res.segment)} target="_blank" className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl hover:bg-slate-800 hover:border-blue-500/50 transition-all flex flex-col justify-between group shadow-xl">
+                                    <div><h4 className="font-black text-white text-sm group-hover:text-blue-400 transition-colors uppercase mb-2">{res.title}</h4><p className="text-slate-500 text-xs leading-relaxed italic mb-4">{res.desc}</p></div>
+                                    <div className="flex items-center gap-2 text-[10px] font-black text-blue-400 uppercase tracking-widest">EGW Mobile <Icon name="external-link" size={12}/></div>
+                                </a>
+                            ))}
                         </div>
                     </div>
+                </div>
+            );
+
+            const renderDecoder = () => (
+                <div className="h-full p-8 max-w-7xl mx-auto overflow-y-auto custom-scrollbar animate-in fade-in pb-32">
+                    <div className="flex flex-col md:flex-row justify-between items-center mb-12 border-b border-slate-800 pb-8 gap-6"><div><h2 className="text-5xl font-black text-white uppercase tracking-tighter leading-none mb-2">Decoder</h2><p className="text-slate-500 text-xs font-black uppercase tracking-[0.4em] italic">Full Catalog Prophetic Keys</p></div><div className="relative w-full max-w-xs"><input type="text" placeholder="Search 85+ symbols..." className="w-full bg-slate-900 border border-slate-800 p-4 rounded-2xl text-xs focus:border-amber-500 outline-none transition-all pl-12 text-white" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /><div className="absolute left-4 top-4 text-slate-600"><Icon name="search" size={18}/></div></div></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{filteredSymbols.map((s, idx) => (<div key={idx} className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] hover:border-amber-500 transition-all flex flex-col justify-between group"><div><div className="flex justify-between items-start mb-4"><h3 className="text-xl font-black text-white uppercase tracking-tight group-hover:text-amber-400">{s.symbol}</h3><span className="text-[8px] font-black uppercase bg-slate-800 border px-2 py-1 rounded-full text-slate-500">{s.cat}</span></div><p className="text-slate-400 text-sm leading-relaxed mb-6 italic border-l-2 border-slate-800 pl-4">{s.meaning}</p></div><div className="flex items-center gap-2 text-[10px] font-black text-blue-400 uppercase tracking-widest"><Icon name="book-open" size={14}/> Key: {s.bible}</div></div>))}</div>
                 </div>
             );
 
@@ -245,89 +269,53 @@
                     <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-full inline-block mb-6"><Icon name="scroll" size={48} className="text-amber-500"/></div>
                     <h2 className="text-5xl font-black text-white uppercase mb-4">About The Remnant Study</h2>
                     <p className="text-slate-400 text-lg uppercase font-black italic mb-12">A Roadmap for the Final Days</p>
-                    
-                    <div className="bg-slate-900 border border-slate-800 p-10 rounded-[3rem] shadow-2xl flex flex-col md:flex-row items-center gap-10 mb-12">
+                    <div className="bg-slate-900 border border-slate-800 p-10 rounded-[3rem] shadow-2xl flex flex-col md:flex-row items-center gap-10 mb-12 text-left">
                         <div className="bg-white p-4 rounded-3xl shadow-xl">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://copperandcrimsom.com/" className="w-40 h-40" alt="QR" />
+                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(OFFICIAL_URL)}`} className="w-40 h-40" alt="QR" />
                         </div>
-                        <div className="text-left flex-1">
-                            <h3 className="text-3xl font-black text-white uppercase mb-3 text-white">Copper & Crimson</h3>
-                            <p className="text-slate-400 text-sm mb-6">Scan to visit our primary outreach platform for additional truth-filled media.</p>
-                            <a href="https://copperandcrimsom.com/" target="_blank" className="inline-flex items-center gap-2 text-blue-400 font-black uppercase text-xs hover:underline">Visit Website <Icon name="external-link" /></a>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-                        <div className="bg-slate-900/50 border border-slate-800 p-8 rounded-[2.5rem] text-left">
-                            <h4 className="text-white font-black uppercase mb-4 flex items-center gap-2"><Icon name="book-open" className="text-blue-400"/> Sola Scriptura</h4>
-                            <p className="text-slate-400 text-sm">Every prophetic milestone is rooted directly in the Word of God (KJV).</p>
-                        </div>
-                        <div className="bg-slate-900/50 border border-slate-800 p-8 rounded-[2.5rem] text-left">
-                            <h4 className="text-white font-black uppercase mb-4 flex items-center gap-2"><Icon name="flame" className="text-rose-500"/> Spirit of Prophecy</h4>
-                            <p className="text-slate-400 text-sm">We utilize insights from Ellen G. White to clarify historical fulfillment.</p>
+                        <div className="flex-1">
+                            <h3 className="text-3xl font-black text-white uppercase mb-3 text-white">Share the Mission</h3>
+                            <p className="text-slate-400 text-sm mb-6 italic">Scan this code to quickly open this study tool on any mobile device. This is a visual roadmap intended for the proclamation of truth in the final days.</p>
+                            <a href={OFFICIAL_URL} target="_blank" className="inline-flex items-center gap-2 text-blue-400 font-black uppercase text-xs hover:underline">Official Site <Icon name="external-link" /></a>
                         </div>
                     </div>
-
-                    <section className="bg-rose-950/20 border border-rose-900/30 p-10 rounded-[4rem] text-center shadow-2xl">
-                        <Icon name="heart" className="text-rose-500 mb-6 mx-auto" size={48} />
-                        <h3 className="text-3xl font-black text-white uppercase mb-4">Support the Mission</h3>
-                        <p className="text-slate-300 text-sm mb-10">Your support helps keep this tool active and free for world outreach.</p>
-                        <a href="https://square.link/u/OOXgkZZs" target="_blank" className="inline-block py-6 px-12 bg-[#008CFF] hover:bg-[#0074D4] text-white rounded-[2rem] font-black uppercase tracking-widest shadow-xl">Support via Square</a>
-                    </section>
+                    <section className="bg-rose-950/20 border border-rose-900/30 p-10 rounded-[4rem] text-center shadow-2xl"><div className="text-rose-500 mb-6 flex justify-center"><Icon name="heart" size={48} /></div><h3 className="text-3xl font-black text-white uppercase mb-4">Support the Mission</h3><p className="text-slate-300 text-sm mb-10">Your support helps keep this tool active and free for world outreach.</p><a href="https://square.link/u/OOXgkZZs" target="_blank" className="inline-block py-6 px-12 bg-[#008CFF] hover:bg-[#0074D4] text-white rounded-[2rem] font-black uppercase tracking-widest shadow-xl transition-all active:scale-95">Support via Square</a></section>
                 </div>
             );
 
             const renderShare = () => (
                 <div className="h-full p-8 max-w-4xl mx-auto flex flex-col items-center justify-center text-center pb-32">
-                    <Icon name="share-2" size={64} className="text-blue-500 mb-8" />
+                    <div className="text-blue-500 mb-8"><Icon name="share-2" size={64} /></div>
                     <h2 className="text-5xl font-black text-white uppercase mb-6">Share the Warning</h2>
-                    <p className="text-slate-300 text-xl italic mb-12 max-w-2xl">"Proclaim the message of the soon-coming Saviour to every nation."</p>
-                    
+                    <p className="text-slate-300 text-xl italic mb-12 max-w-2xl">"Proclaim the message of the soon-coming Saviour to every nation, kindred, tongue, and people."</p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full max-w-2xl mb-12">
-                        <button className="bg-slate-900 border border-slate-800 p-8 rounded-3xl flex flex-col items-center gap-3 transition-all hover:bg-slate-800">
-                            <Icon name="facebook" size={32} className="text-blue-600"/><span className="text-[10px] font-black uppercase text-slate-500">Facebook</span>
-                        </button>
-                        <button className="bg-slate-900 border border-slate-800 p-8 rounded-3xl flex flex-col items-center gap-3 transition-all hover:bg-slate-800">
-                            <Icon name="twitter" size={32} className="text-blue-400"/><span className="text-[10px] font-black uppercase text-slate-500">Twitter</span>
-                        </button>
-                        <button className="bg-slate-900 border border-slate-800 p-8 rounded-3xl flex flex-col items-center gap-3 transition-all hover:bg-slate-800">
-                            <Icon name="message-square" size={32} className="text-green-500"/><span className="text-[10px] font-black uppercase text-slate-500">WhatsApp</span>
-                        </button>
-                        <button className="bg-slate-900 border border-slate-800 p-8 rounded-3xl flex flex-col items-center gap-3 transition-all hover:bg-slate-800">
-                            <Icon name="mail" size={32} className="text-amber-500"/><span className="text-[10px] font-black uppercase text-slate-500">Email</span>
-                        </button>
+                        <button onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(OFFICIAL_URL)}`)} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl flex flex-col items-center gap-3 transition-all hover:bg-slate-800 active:scale-95"><Icon name="facebook" size={32} className="text-blue-600"/><span className="text-[10px] font-black uppercase text-slate-500">Facebook</span></button>
+                        <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(OFFICIAL_URL)}`)} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl flex flex-col items-center gap-3 transition-all hover:bg-slate-800 active:scale-95"><Icon name="twitter" size={32} className="text-blue-400"/><span className="text-[10px] font-black uppercase text-slate-500">Twitter (X)</span></button>
+                        <button onClick={() => window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + " " + OFFICIAL_URL)}`)} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl flex flex-col items-center gap-3 transition-all hover:bg-slate-800 active:scale-95"><Icon name="message-square" size={32} className="text-green-500"/><span className="text-[10px] font-black uppercase text-slate-500">WhatsApp</span></button>
+                        <button onClick={() => window.open(`mailto:?subject=Prophetic Study Resource&body=${encodeURIComponent(shareText + " " + OFFICIAL_URL)}`)} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl flex flex-col items-center gap-3 transition-all hover:bg-slate-800 active:scale-95"><Icon name="mail" size={32} className="text-amber-500"/><span className="text-[10px] font-black uppercase text-slate-500">Email</span></button>
                     </div>
-
                     <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] w-full max-w-lg">
-                        <h3 className="text-white font-black uppercase text-xs tracking-widest mb-4 text-white">Copy Direct Link</h3>
+                        <h3 className="text-white font-black uppercase text-xs tracking-widest mb-4">Copy Direct Link</h3>
                         <div className="flex gap-2">
-                            <div className="flex-1 bg-slate-950 border border-slate-800 p-4 rounded-xl text-slate-500 text-xs truncate text-left overflow-hidden">
-                                {window.location.href}
-                            </div>
-                            <button onClick={copyToClipboard} className="bg-blue-600 p-4 rounded-xl text-white">
-                                {showCopyFeedback ? <Icon name="shield-check" /> : <Icon name="link" />}
-                            </button>
+                            <div className="flex-1 bg-slate-950 border border-slate-800 p-4 rounded-xl text-slate-500 text-xs truncate text-left overflow-hidden">{OFFICIAL_URL}</div>
+                            <button onClick={copyToClipboard} className="bg-blue-600 p-4 rounded-xl text-white active:scale-95 transition-all">{showCopyFeedback ? <Icon name="shield-check" /> : <Icon name="link" />}</button>
                         </div>
                     </div>
                 </div>
             );
 
             const renderMessages = () => (
-                <div className="h-full p-8 max-w-7xl mx-auto overflow-y-auto custom-scrollbar pb-32">
-                    <div className="flex justify-between items-end mb-12 border-b border-blue-900/30 pb-6">
-                        <div><h2 className="text-4xl font-black text-white uppercase tracking-tighter flex items-center gap-4"><ThreeAngelsIcon className="text-blue-400" size={40} /> The Three Angels' Messages</h2><p className="text-slate-500 text-xs font-black uppercase tracking-[0.3em] mt-1 italic">God's Final Call to Humanity</p></div>
-                    </div>
+                <div className="h-full p-8 max-w-7xl mx-auto overflow-y-auto custom-scrollbar pb-32 animate-in fade-in">
+                    <div className="flex justify-between items-end mb-12 border-b border-blue-900/30 pb-6"><div><h2 className="text-4xl font-black text-white uppercase tracking-tighter flex items-center gap-4"><ThreeAngelsIcon className="text-blue-400" size={40} /> The Three Angels' Messages</h2><p className="text-slate-500 text-xs font-black uppercase tracking-[0.3em] mt-1 italic">God's Final Call to Humanity</p></div></div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {angelMessages.map(am => (
-                            <button key={am.id} onClick={() => setSelectedEvent({...am, title: am.name, description: am.desc, spiritOfProphecy: am.egw, egwLink: am.link})} className="bg-slate-900 p-8 rounded-[3rem] border border-slate-800 shadow-2xl hover:border-blue-500 transition-all text-left group">
-                                <div className="flex items-center gap-4 mb-6">
-                                    <div className="p-4 bg-blue-600/10 rounded-2xl text-blue-400"><Icon name={am.id === 'am1' ? 'globe' : am.id === 'am2' ? 'skull' : 'alert-triangle'} size={32} /></div>
-                                    <h3 className="text-xl font-black text-white uppercase">{am.name}</h3>
-                                </div>
-                                <p className="text-slate-400 text-sm mb-8 leading-relaxed italic">{am.desc}</p>
-                                <div className="flex items-center text-blue-400 font-black text-xs uppercase">Study Message <Icon name="chevron-right" /></div>
-                            </button>
-                        ))}
+                        {angelMessages.map(am => (<button key={am.id} onClick={() => setSelectedEvent({...am, title: am.name, description: am.desc, spiritOfProphecy: am.egw, egwLink: am.link})} className="bg-slate-900 p-8 rounded-[3rem] border border-slate-800 shadow-2xl hover:border-blue-500 transition-all text-left group">
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="p-4 bg-blue-600/10 rounded-2xl text-blue-400"><Icon name={am.id === 'am1' ? 'globe' : am.id === 'am2' ? 'skull' : 'alert-triangle'} size={32} /></div>
+                                <h3 className="text-xl font-black text-white uppercase">{am.name}</h3>
+                            </div>
+                            <p className="text-slate-400 text-sm mb-8 leading-relaxed italic">{am.desc}</p>
+                            <div className="flex items-center text-blue-400 font-black text-xs uppercase tracking-widest">Study Message <Icon name="chevron-right" className="ml-2"/></div>
+                        </button>))}
                     </div>
                 </div>
             );
@@ -335,68 +323,12 @@
             return (
                 <div className="flex flex-col h-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
                     <header className="p-6 bg-slate-900 border-b border-slate-800 flex justify-between items-center z-50">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-amber-500 rounded-2xl shadow-lg shadow-amber-500/20"><Icon name="clock" size={24} className="text-slate-950"/></div>
-                            <div><h1 className="font-black text-2xl uppercase tracking-tighter leading-none text-white">The Remnant Study</h1><span className="text-[10px] font-black text-slate-500 uppercase mt-1 block">{version}</span></div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => setViewMode('share')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'share' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400'}`}><Icon name="share-2" size={20}/></button>
-                            <button onClick={() => setViewMode('about')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'about' ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-slate-800 text-slate-400'}`}><Icon name="info" size={20}/></button>
-                        </div>
+                        <div className="flex items-center gap-4"><div className="p-3 bg-amber-500 rounded-2xl shadow-lg shadow-amber-500/20"><Icon name="clock" size={24} className="text-slate-950"/></div><div><h1 className="font-black text-2xl uppercase tracking-tighter leading-none text-white">The Remnant Study</h1><span className="text-[10px] font-black text-slate-500 uppercase mt-1 block">{version}</span></div></div>
+                        <div className="flex items-center gap-2"><button onClick={() => setViewMode('share')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'share' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400'}`}><Icon name="share-2" size={20}/></button><button onClick={() => setViewMode('about')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'about' ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-slate-800 text-slate-400'}`}><Icon name="info" size={20}/></button></div>
                     </header>
-
-                    <div className="flex-1 relative overflow-hidden bg-gradient-to-b from-slate-950 to-slate-900">
-                        {viewMode === 'timeline' && renderTimeline()}
-                        {viewMode === 'about' && renderAbout()}
-                        {viewMode === 'share' && renderShare()}
-                        {viewMode === 'messages' && renderMessages()}
-                        {viewMode === 'sanctuary' && (
-                            <div className="h-full p-8 max-w-7xl mx-auto overflow-y-auto custom-scrollbar animate-in fade-in pb-32 text-center text-slate-500 font-black uppercase flex flex-col justify-center items-center opacity-30"><Icon name="calendar" size={64} className="mb-4" /> Sabbath Hub Active</div>
-                        )}
-                        {viewMode === 'decoder' && (
-                            <div className="h-full p-8 max-w-7xl mx-auto overflow-y-auto custom-scrollbar animate-in fade-in pb-32 text-center text-slate-500 font-black uppercase flex flex-col justify-center items-center opacity-30"><Icon name="shield-check" size={64} className="mb-4" /> Symbols Decoder Active</div>
-                        )}
-                    </div>
-
-                    <nav className="p-5 bg-slate-900 border-t border-slate-800 flex justify-around items-center z-50">
-                        {[
-                            { id: 'timeline', label: 'Timeline', icon: 'layout' },
-                            { id: 'sanctuary', label: 'Sabbath', icon: 'calendar' },
-                            { id: 'decoder', label: 'Symbols', icon: 'shield-check' },
-                            { id: 'messages', label: 'Messages', icon: 'three-angels' }
-                        ].map(n => {
-                            const isActive = viewMode === n.id;
-                            return (
-                                <button key={n.id} onClick={() => setViewMode(n.id)} className={`flex flex-col items-center gap-1.5 transition-all ${isActive ? 'text-amber-500 scale-110' : 'text-slate-500'}`}>
-                                    {n.icon === 'three-angels' ? <ThreeAngelsIcon size={26} /> : <Icon name={n.icon} size={26} />}
-                                    <span className="text-[9px] font-black uppercase tracking-widest">{n.label}</span>
-                                </button>
-                            );
-                        })}
-                    </nav>
-
-                    {selectedEvent && (
-                        <div className="fixed inset-0 bg-black/98 z-[100] flex items-center justify-center p-4 backdrop-blur-xl">
-                            <div className="bg-slate-900 border border-amber-500/30 rounded-[3rem] w-full max-w-xl p-10 overflow-hidden shadow-2xl relative">
-                                <button onClick={() => setSelectedEvent(null)} className="absolute top-8 right-8 p-3 bg-slate-800 hover:bg-red-500/20 rounded-full transition-colors"><Icon name="x" size={32}/></button>
-                                <div className="mb-10">
-                                    <h2 className="text-4xl font-black uppercase text-white leading-none mb-2">{selectedEvent.title}</h2>
-                                    <p className="text-amber-500 font-black uppercase text-[10px] tracking-[0.3em]">{selectedEvent.label || 'Prophetic Insight'}</p>
-                                </div>
-                                <div className="space-y-10">
-                                    <p className="text-slate-100 text-xl leading-relaxed font-medium border-l-4 border-amber-500 pl-8">{selectedEvent.description}</p>
-                                    <div className="bg-slate-800/40 p-10 rounded-[2.5rem] border border-slate-700 italic text-slate-300 text-lg relative">
-                                        <div className="absolute -top-4 left-8 bg-slate-900 px-3 py-1 rounded-full border border-slate-700 text-[10px] font-black text-blue-400 uppercase">Spirit of Prophecy</div>
-                                        "{selectedEvent.spiritOfProphecy}"
-                                    </div>
-                                    <div className="flex gap-4">
-                                        <a href={getBibleLink(selectedEvent.bible || "Revelation")} target="_blank" className="flex-1 text-center py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2">Bible Study <Icon name="external-link" /></a>
-                                        {selectedEvent.egwLink && <a href={selectedEvent.egwLink} target="_blank" className="flex-1 text-center py-4 bg-amber-500 text-slate-950 rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2">Context Study <Icon name="external-link" /></a>}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <div className="flex-1 relative overflow-hidden bg-gradient-to-b from-slate-950 to-slate-900">{viewMode === 'timeline' && renderTimeline()}{viewMode === 'sanctuary' && renderSabbath()}{viewMode === 'decoder' && renderDecoder()}{viewMode === 'about' && renderAbout()}{viewMode === 'share' && renderShare()}{viewMode === 'messages' && renderMessages()}</div>
+                    <nav className="p-5 bg-slate-900 border-t border-slate-800 flex justify-around items-center z-50">{[{ id: 'timeline', label: 'Timeline', icon: 'layout' }, { id: 'sanctuary', label: 'Sabbath', icon: 'calendar' }, { id: 'decoder', label: 'Symbols', icon: 'shield-check' }, { id: 'messages', label: 'Messages', icon: 'three-angels' }].map(n => { const isActive = viewMode === n.id; return (<button key={n.id} onClick={() => setViewMode(n.id)} className={`flex flex-col items-center gap-1.5 transition-all active:scale-95 ${isActive ? 'text-amber-500 scale-110' : 'text-slate-500'}`}>{n.icon === 'three-angels' ? <ThreeAngelsIcon size={26} /> : <Icon name={n.icon} size={26} />}<span className="text-[9px] font-black uppercase tracking-widest">{n.label}</span></button>); })}</nav>
+                    {selectedEvent && (<div className="fixed inset-0 bg-black/98 z-[100] flex items-center justify-center p-4 backdrop-blur-xl"><div className="bg-slate-900 border border-amber-500/30 rounded-[3rem] w-full max-w-xl p-10 overflow-hidden shadow-2xl relative"><button onClick={() => setSelectedEvent(null)} className="absolute top-8 right-8 p-3 bg-slate-800 hover:bg-red-500/20 rounded-full transition-colors"><Icon name="x" size={32}/></button><div className="mb-10"><h2 className="text-4xl font-black uppercase text-white leading-none mb-2">{selectedEvent.title}</h2><p className="text-amber-500 font-black uppercase text-[10px] tracking-[0.3em]">{selectedEvent.label || 'Prophetic Insight'}</p></div><div className="space-y-10"><p className="text-slate-100 text-xl leading-relaxed font-medium border-l-4 border-amber-500 pl-8">{selectedEvent.description}</p><div className="bg-slate-800/40 p-10 rounded-[2.5rem] border border-slate-700 italic text-slate-300 text-lg relative"><div className="absolute -top-4 left-8 bg-slate-900 px-3 py-1 rounded-full border border-slate-700 text-[10px] font-black text-blue-400 uppercase">Spirit of Prophecy</div>"{selectedEvent.spiritOfProphecy}"</div><div className="flex gap-4"><a href={getBibleLink(selectedEvent.bible || "Revelation")} target="_blank" className="flex-1 text-center py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2">Bible Study <Icon name="external-link" /></a>{selectedEvent.egwLink && <a href={selectedEvent.egwLink} target="_blank" className="flex-1 text-center py-4 bg-amber-500 text-slate-950 rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2">Context Study <Icon name="external-link" /></a>}</div></div></div></div>)}
                 </div>
             );
         }
@@ -405,4 +337,4 @@
         root.render(<App />);
     </script>
 </body>
-</html>
+</html> 
