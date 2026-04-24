@@ -1,0 +1,557 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Scroll, BookOpen, Info, Crosshair, ShieldCheck, Map as MapIcon, Zap, Clock, ArrowRight,
+  X, Flame, Sun, Crown, ExternalLink, Library, Skull, Waves, CloudLightning, AlertTriangle,
+  Mountain, Eye, ThermometerSun, Moon, Volume2, Loader2, Type, Languages, Layout, Hammer,
+  Shield, HeartPulse, Navigation, Users, Star, MessageSquare, Highlighter, Globe, Sword,
+  Key, Anchor, Droplets, ZapOff, ChevronRight, Leaf, AlertCircle, Gavel, History, Search, FileText,
+  Compass, Wind, Scale, Target, Activity, Layers, Pause, Calendar, Heart, QrCode, Share2, 
+  Facebook, Twitter, Mail, Link as LinkIcon
+} from 'lucide-react';
+
+// --- VERSION CONTROL ---
+const version = "v2.0.0 Final Production";
+
+// --- CUSTOM SDA THREE ANGELS ICON ---
+const ThreeAngelsIcon = ({ size = 24, className = "" }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <circle cx="12" cy="18" r="4" />
+    <path d="M12 14v4M8.5 16.5c1.5-1 5.5-1 7 0" />
+    <path d="M12 10L10 3M12 10l2-7" />
+    <path d="M12 6h4" />
+    <path d="M8 11L4 6M8 11l-2-6" />
+    <path d="M6 8H2" />
+    <path d="M16 11l4-5M16 11l2-5" />
+    <path d="M18 8h4" />
+  </svg>
+);
+
+// --- UTILITY LOGIC (GLOBAL SCOPE) ---
+const getX = (year, min = -600, max = 2250) => {
+  return ((year - min) / (max - min)) * 100;
+};
+
+const getBibleLink = (ref) => `https://www.biblegateway.com/passage/?search=${encodeURIComponent(ref)}&version=KJV`;
+
+const getEGWLink = (bookId, segment) => `https://m.egwwritings.org/en/book/${bookId}.${segment}#${segment}`;
+
+// --- COMPREHENSIVE DATA: 85+ SYMBOLS ---
+const symbolDecoder = [
+  { symbol: "Angel", meaning: "Messenger of God.", bible: "Daniel 8:16; 9:21; Luke 1:19, 26; Heb 1:14", cat: "Entities" },
+  { symbol: "Ark of Testimony", meaning: "Mercy seat where God dwells.", bible: "Exo 25:10-22; Psa 80:1", cat: "Sanctuary" },
+  { symbol: "Babylon", meaning: "Religious apostasy and confusion.", bible: "Gen 10:8-10; 11:6-9; Rev 17:1-5", cat: "Entities" },
+  { symbol: "Balaam, doctrine of", meaning: "Advancing our own interests, compromise, and idolatry.", bible: "Numbers 22:5-25", cat: "Sins" },
+  { symbol: "Beast", meaning: "Kingdom, government, or political power.", bible: "Daniel 7:23", cat: "Entities" },
+  { symbol: "Binding of Satan", meaning: "A symbolic chain of circumstances.", bible: "Isaiah 14:12-20; Rev 20:1-3", cat: "Entities" },
+  { symbol: "Corrupt Woman", meaning: "An apostate church.", bible: "Eze 16:15-58; Rev 17:1-5", cat: "Entities" },
+  { symbol: "Dragon", meaning: "Satan or his agency (Pagan Rome).", bible: "Isa 27:1; Rev 12:7-9", cat: "Entities" },
+  { symbol: "Egypt", meaning: "Symbol of atheism and rebellion.", bible: "Exodus 5:2; Rev 11:8", cat: "Entities" },
+  { symbol: "Faithful Witness", meaning: "Jesus Christ.", bible: "John 18:37; Rev 1:5; 3:14", cat: "Entities" },
+  { symbol: "False Prophet", meaning: "Apostate Protestantism.", bible: "Rev 16:13-14; 19:20", cat: "Entities" },
+  { symbol: "Four Beasts", meaning: "Heavenly beings with responsibilities.", bible: "Rev 4:6-9; 5:8-10", cat: "Entities" },
+  { symbol: "Harlot", meaning: "Apostate church or religion.", bible: "Isaiah 1:21; Jer 3:1-3", cat: "Entities" },
+  { symbol: "Israel", meaning: "True followers of Christ.", bible: "Romans 9:6-8; Gal 3:29", cat: "Entities" },
+  { symbol: "Lamb", meaning: "Jesus; the Sacrifice for sin.", bible: "John 1:29; 1 Cor 5:7", cat: "Entities" },
+  { symbol: "Lion", meaning: "Strength; Jesus as King.", bible: "Gen 49:9; Rev 5:5", cat: "Entities" },
+  { symbol: "Morning Star", meaning: "Jesus Christ.", bible: "Rev 22:16", cat: "Entities" },
+  { symbol: "New Jerusalem", meaning: "The Holy City; the Bride.", bible: "Rev 3:12; 21:2", cat: "Entities" },
+  { symbol: "Pure Woman", meaning: "The True Church.", bible: "Jeremiah 6:2; 2 Cor 11:2", cat: "Entities" },
+  { symbol: "Serpent", meaning: "Satan.", bible: "Rev 12:7-9; 20:2", cat: "Entities" },
+  { symbol: "Woman, pure", meaning: "True church.", bible: "Jer 6:2; 2 Cor 11:2", cat: "Entities" },
+  { symbol: "Woman, impure", meaning: "Apostate church.", bible: "Eze 23:2-21; Rev 14:4", cat: "Entities" },
+  { symbol: "Black", meaning: "Moral darkness, sin, apostasy.", bible: "Exo 10:21-23; Acts 26:18", cat: "Colors" },
+  { symbol: "Blood", meaning: "Life or bloodshed.", bible: "Leviticus 17:11; Deut 12:23", cat: "Nature" },
+  { symbol: "Bottomless Pit", meaning: "Earth in chaos and desolation.", bible: "Gen 1:1-2; Rev 20:1-3", cat: "Nature" },
+  { symbol: "Eagle", meaning: "Speed, power, and protection.", bible: "Deut 28:49; Rev 12:14", cat: "Nature" },
+  { symbol: "Earth", meaning: "Sparsely populated area.", bible: "Rev 12:16", cat: "Nature" },
+  { symbol: "Four Corners", meaning: "Four directions of the compass.", bible: "Jeremiah 49:36", cat: "Nature" },
+  { symbol: "Horse", meaning: "Battle or angelic agencies.", bible: "Zec 1:8-10; 6:1-8", cat: "Nature" },
+  { symbol: "Locusts", meaning: "Destructive agencies.", bible: "Joel 1:4; Deut 28:38", cat: "Nature" },
+  { symbol: "Moon", meaning: "Ceremonial types and shadows.", bible: "Psalm 89:35-37; Heb 10:1", cat: "Nature" },
+  { symbol: "Mountains", meaning: "Political powers or kingdoms.", bible: "Daniel 2:35, 44", cat: "Nature" },
+  { symbol: "Rainbow", meaning: "Token of God's covenant.", bible: "Gen 9:11-17", cat: "Nature" },
+  { symbol: "Red", meaning: "Sin, corruption, and persecution.", bible: "Isaiah 1:18; Nahum 2:3", cat: "Colors" },
+  { symbol: "Stars", meaning: "Angels or ministers.", bible: "Rev 1:16, 20; 12:4", cat: "Nature" },
+  { symbol: "Sun", meaning: "Jesus and the Gospel light.", bible: "John 9:5; Malachi 4:2", cat: "Nature" },
+  { symbol: "Waters", meaning: "People, nations, tongues.", bible: "Rev 17:15", cat: "Nature" },
+  { symbol: "White", meaning: "Purity and victory.", bible: "Psalm 51:7; Isaiah 1:18", cat: "Colors" },
+  { symbol: "Winds", meaning: "Strife, war, and commotion.", bible: "Jeremiah 49:36, 37", cat: "Nature" },
+  { symbol: "Wine", meaning: "False doctrine or Blood of Atonement.", bible: "Jer 25:15; Mat 26:21", cat: "Nature" },
+  { symbol: "Wings", meaning: "Speed and protection.", bible: "Exodus 19:4; Hab 1:6", cat: "Nature" },
+  { symbol: "Wormwood", meaning: "Sorrow and bitterness.", bible: "Jeremiah 9:15; 23:15", cat: "Nature" },
+  { symbol: "Bow", meaning: "Success in spiritual battle.", bible: "Psalm 7:11-12; Rev 6:2", cat: "Objects" },
+  { symbol: "Crowns", meaning: "Kingship and victory.", bible: "2 Kin 11:12; Jam 1:12", cat: "Objects" },
+  { symbol: "Cup", meaning: "Judgments and suffering.", bible: "Psalm 11:6; Isa 51:17", cat: "Objects" },
+  { symbol: "Door", meaning: "Opportunity or probation.", bible: "Rev 3:20; Luke 13:24", cat: "Objects" },
+  { symbol: "Eye Salve", meaning: "Holy Spirit's discernment.", bible: "Eph 1:17-19", cat: "Sanctuary" },
+  { symbol: "Garments", meaning: "Character righteousness.", bible: "Isa 61:10; Rom 13:14", cat: "Objects" },
+  { symbol: "Gold", meaning: "Faith and scripture.", bible: "Psalm 19:7-10; Jam 2:5", cat: "Objects" },
+  { symbol: "Image", meaning: "A likeness or replica.", bible: "Exo 20:4; Rom 8:29", cat: "Objects" },
+  { symbol: "Incense", meaning: "Prayers of the saints.", bible: "Psalm 141:2; Rev 8:3", cat: "Sanctuary" },
+  { symbol: "Key of David", meaning: "Authority over the sanctuary.", bible: "Rev 3:7; Isa 22:22", cat: "Objects" },
+  { symbol: "Keys", meaning: "Jurisdiction and control.", bible: "Matthew 16:19", cat: "Objects" },
+  { symbol: "Measuring Rod", meaning: "The Law of God.", bible: "James 2:10-12", cat: "Objects" },
+  { symbol: "Oil", meaning: "The Holy Spirit.", bible: "Zec 4:2-6", cat: "Sanctuary" },
+  { symbol: "Seven Candlesticks", meaning: "The Seven Churches.", bible: "Rev 1:20", cat: "Sanctuary" },
+  { symbol: "Seven Lamps", meaning: "Jesus; Word of God.", bible: "John 9:5; Rev 4:5", cat: "Sanctuary" },
+  { symbol: "Sickle", meaning: "Harvest/End of the world.", bible: "Mat 13:39; Rev 14:14", cat: "Objects" },
+  { symbol: "Sword", meaning: "Bloodshed and destruction.", bible: "Isaiah 3:25", cat: "Objects" },
+  { symbol: "Two-edged Sword", meaning: "The Word of God.", bible: "Heb 4:12; Eph 6:17", cat: "Objects" },
+  { symbol: "White robes", meaning: "Victory and Righteousness.", bible: "Isaiah 61:10; Rev 19:8", cat: "Objects" }
+];
+
+// --- MASTER DATA SETS ---
+const plagueData = [
+  { id: 'p1', year: 2155, label: '1st Vial', title: 'Grievous Sores', bible: 'Rev 16:2', icon: Skull, description: 'Falling on those with the mark.', spiritOfProphecy: 'The first plague fell upon those who had the mark of the beast, and who worshiped his image.' },
+  { id: 'p2', year: 2165, label: '2nd Vial', title: 'Sea to Blood', bible: 'Rev 16:3', icon: Waves, description: 'Every living soul died in the sea.', spiritOfProphecy: 'The sea became as the blood of a dead man. Every living soul died in the sea.' },
+  { id: 'p3', year: 2175, label: '3rd Vial', title: 'Rivers to Blood', bible: 'Rev 16:4-7', icon: Droplets, description: 'Judgment for shedding blood.', spiritOfProphecy: 'God\'s justice stands fully vindicated. They have shed the blood of saints and prophets.' },
+  { id: 'p4', year: 2185, label: '4th Vial', title: 'Scorching Sun', bible: 'Rev 16:8-9', icon: ThermometerSun, description: 'Harvest perishes under heat.', spiritOfProphecy: 'Power given to sun to scorch men with fire. The land mourneth because the harvest is perished.' },
+  { id: 'p5', year: 2195, label: '5th Vial', title: 'Total Darkness', bible: 'Rev 16:10-11', icon: Moon, description: 'Seat of the beast strikes dark.', spiritOfProphecy: 'God manifests His power for the deliverance of His people at midnight.' },
+  { id: 'p6', year: 2205, label: '6th Vial', title: 'Euphrates Dried', bible: 'Rev 16:12-16', icon: Mountain, description: 'Way for kings of east prepared.', spiritOfProphecy: 'Spirits of devils will go forth to the kings of the earth... to unite with Satan in his last struggle.' },
+  { id: 'p7', year: 2215, label: '7th Vial', title: 'It Is Done', bible: 'Rev 16:17-21', icon: CloudLightning, description: 'Greatest earthquake ever.', spiritOfProphecy: 'The whole earth heaves and swells like the waves of the sea. Mountain chains are sinking.' }
+];
+
+const angelMessages = [
+  { id: 'am1', name: "1st Message", start: 1831, end: 1844, color: "blue", bible: "Revelation 14:6-7", desc: "The Everlasting Gospel and the Hour of Judgment.", egw: "The first and second messages were given in 1843 and 1844. - GC 411", link: getEGWLink(132, 1714), trackPos: 'top' },
+  { id: 'am2', name: "2nd Message", start: 1844, end: 1888, color: "amber", bible: "Revelation 14:8", desc: "Babylon is Fallen.", egw: "The second angel's message was first preached in the summer of 1844. - GC 389", link: "https://m.egwwritings.org/en/book/14648.2#0", trackPos: 'mid' },
+  { id: 'am3', name: "3rd Message", start: 1844.5, end: 2150, color: "rose", bible: "Revelation 14:9-12", desc: "The Warning against the Mark of the Beast.", egw: "As the ministration of Jesus closed in the holy place... the third angel's message was given. - EW 254", link: getEGWLink(132, 2727), trackPos: 'low' }
+];
+
+const timelineData = [
+  { id: '457bc', year: -457, label: '457 BC', title: 'The Decree', icon: Scroll, bible: "Daniel 9:25", description: "Start of 2300 days." },
+  { id: '27ad', year: 27, label: '27 AD', title: 'Baptism', icon: Zap, bible: "Daniel 9:25", description: "Jesus anointed." },
+  { id: '31ad', year: 31, label: '31 AD', title: 'Crucifixion', icon: Crosshair, bible: "Daniel 9:27", description: "Ceasing of sacrifice." },
+  { id: '538ad', year: 538, label: '538 AD', title: 'Supremacy', icon: ShieldCheck, bible: "Rev 13:5", description: "Start of 1260 years." },
+  { id: '1798ad', year: 1798, label: '1798 AD', title: 'Wound', icon: Clock, bible: "Rev 13:3", description: "Time of the End." },
+  { id: '1844ad', year: 1844, label: '1844 AD', title: 'Judgment', icon: MapIcon, bible: "Dan 8:14", description: "Sanctuary Cleansed." },
+  { id: 'close-prob', year: 2150, label: 'Final', title: 'Probation Closes', icon: ZapOff, bible: "Rev 22:11", description: "Destiny Fixed." },
+  { id: 'victory', year: 2230, label: 'Return', title: 'Second Coming', icon: Crown, bible: "Rev 19:11", description: "King of Kings." }
+];
+
+const churchEras = [
+  { name: "Ephesus", start: 31, end: 100, color: "emerald", bible: "Rev 2:1-7", desc: "Apostolic Purity.", egw: "Marked by the purity of its life." },
+  { name: "Smyrna", start: 100, end: 313, color: "emerald", bible: "Rev 2:8-11", desc: "Era of Persecution.", egw: "Fierce persecutions could not silence the faithful." },
+  { name: "Pergamos", start: 313, end: 538, color: "emerald", bible: "Rev 2:12-17", desc: "Rise of Papacy.", egw: "Compromise and the rise of the man of sin." },
+  { name: "Thyatira", start: 538, end: 1798, color: "emerald", bible: "Rev 2:18-29", desc: "Dark Ages.", egw: "Long period of papal supremacy and persecution." },
+  { name: "Sardis", start: 1798, end: 1833, color: "emerald", bible: "Rev 3:1-6", desc: "Reformation Decay.", egw: "Spiritual death following the initial Reformation." },
+  { name: "Philadelphia", start: 1833, end: 1844, color: "emerald", bible: "Rev 3:7-13", desc: "Great Awakening.", egw: "The open door of the great advent awakening." },
+  { name: "Laodicea", start: 1844, end: 2250, color: "emerald", bible: "Rev 3:14-22", desc: "The Remnant.", egw: "The lukewarm condition of the remnant in the judgment hour." }
+];
+
+const sealEras = [
+  { name: "1st Seal", start: 31, end: 100, label: "White Horse", bible: "Rev 6:1-2", egw: "The purity of the apostolic faith." },
+  { name: "2nd Seal", start: 100, end: 313, label: "Red Horse", bible: "Rev 6:3-4", egw: "Persecution and spiritual decay." },
+  { name: "Black Horse", start: 313, end: 538, label: "Black Horse", bible: "Rev 6:5-6", egw: "The darkness of error." },
+  { name: "Pale Horse", start: 538, end: 1517, label: "Pale Horse", bible: "Rev 6:7-8", egw: "The spiritual death of the Dark Ages." },
+  { name: "Martyrs", start: 1517, end: 1755, label: "Martyrs", bible: "Rev 6:9-11", egw: "The blood of the martyrs calling for justice." }
+];
+
+const trumpetEras = [
+  { name: "5th Trumpet", start: 612, end: 1449, label: "1st Woe", bible: "Rev 9:1-12", egw: "Rise of the Saracens." },
+  { name: "6th Trumpet", start: 1449, end: 1840, label: "2nd Woe", bible: "Rev 9:13-21", egw: "The Ottoman power fulfillment." },
+  { name: "7th Trumpet", start: 1844, end: 2250, label: "3rd Woe", bible: "Rev 11:15-19", egw: "Investigative Judgment and the finishing of the mystery." }
+];
+
+// --- MAIN APP COMPONENT ---
+const App = () => {
+  const [viewMode, setViewMode] = useState('timeline'); 
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showCopyFeedback, setShowCopyFeedback] = useState(false);
+  
+  const copyToClipboard = (text) => {
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    setShowCopyFeedback(true);
+    setTimeout(() => setShowCopyFeedback(false), 2000);
+  };
+
+  // --- COMPONENT RENDERERS ---
+
+  const renderTimeline = () => (
+    <main className="h-full bg-slate-950 flex flex-col overflow-hidden relative">
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="overflow-x-auto custom-scrollbar border-b border-slate-800">
+          <div style={{ width: '2400px' }} className="relative bg-slate-950 pb-8">
+            
+            {/* FLOATING DATE AXIS (STICKY TOP) */}
+            <div className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-xl">
+               <div className="relative h-10 w-full flex items-end">
+                  {Array.from({ length: 30 }).map((_, i) => {
+                     const year = -600 + (i * 100);
+                     if (year > 2300) return null;
+                     return (
+                        <div key={year} className="absolute h-6 border-l border-slate-700/50 flex flex-col justify-end pb-1 pl-1" style={{ left: `${getX(year)}%` }}>
+                           <span className="text-[9px] font-black text-slate-500 uppercase leading-none">
+                              {year < 0 ? `${Math.abs(year)} BC` : (year === 0 ? "1 AD" : `${year} AD`)}
+                           </span>
+                        </div>
+                     );
+                  })}
+                  <div className="absolute h-10 border-l-2 border-amber-500/40 flex items-end pl-1 z-0" style={{ left: `${getX(1844)}%` }}>
+                    <span className="text-[10px] font-black text-amber-500 uppercase pb-1">1844</span>
+                  </div>
+               </div>
+            </div>
+
+            {/* 1. MASTER PANORAMA TRACK */}
+            <div className="p-8 border-b border-slate-800 bg-slate-950">
+               <div className="flex justify-between items-center mb-6">
+                  <div><h2 className="text-2xl font-black text-white uppercase tracking-tighter">Grand Panorama</h2><p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Master History Line</p></div>
+                  <div className="bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-full flex items-center gap-2 shadow-lg"><Clock size={14} className="text-amber-500"/><span className="text-[10px] font-black uppercase">Events</span></div>
+               </div>
+               <div className="relative h-24">
+                  <div className="absolute top-1/2 -translate-y-1/2 w-full h-1 bg-slate-900 shadow-inner"></div>
+                  {timelineData.map(event => {
+                    const IconComp = event.icon;
+                    return (
+                      <button key={event.id} onClick={() => setSelectedEvent({...event, spiritOfProphecy: "Refer to The Great Controversy."})} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 p-2 bg-slate-900 border-2 border-amber-500 rounded-full hover:scale-125 transition-all z-10 shadow-xl" style={{ left: `${getX(event.year)}%` }}>
+                        <IconComp size={16} className="text-amber-500" />
+                        <span className="absolute top-10 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-black bg-slate-800 px-2 py-0.5 rounded border border-slate-700">{event.label}</span>
+                      </button>
+                    );
+                  })}
+               </div>
+            </div>
+
+            {/* 2. SANCTUARY MINISTRY TRACK */}
+            <div className="p-8 border-b border-slate-800 bg-slate-900/10">
+               <div className="flex justify-between items-center mb-6">
+                  <div><h2 className="text-2xl font-black text-blue-400 uppercase tracking-tighter">Sanctuary Ministry</h2><p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Christ's Progression</p></div>
+               </div>
+               <div className="relative h-16">
+                  <button onClick={() => setSelectedEvent({ title: "Outer Court", label: "Redemption", bible: "John 1:29", description: "The Sacrifice on the Cross.", spiritOfProphecy: "Representing the earthly ministry of Christ, culminating in His perfect sacrifice." })} className="absolute top-1/2 -translate-y-1/2 h-10 bg-red-600/10 border-2 border-red-500/20 rounded-l-3xl flex items-center px-6 hover:bg-red-600/30 transition-all cursor-pointer" style={{ left: `${getX(-457)}%`, width: `${getX(31) - getX(-457)}%` }}><span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Outer Court</span></button>
+                  <button onClick={() => setSelectedEvent({ title: "Holy Place", label: "Mediation", bible: "Heb 7:25", description: "Christ's Daily Intercession.", spiritOfProphecy: "Christ applying the merits of His blood for repentant sinners for eighteen centuries." })} className="absolute top-1/2 -translate-y-1/2 h-10 bg-blue-600/10 border-y-2 border-blue-500/20 flex items-center justify-center hover:bg-blue-600/30 transition-all cursor-pointer" style={{ left: `${getX(31.5)}%`, width: `${getX(1844) - getX(31.5)}%` }}><span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Holy Place</span></button>
+                  <button onClick={() => setSelectedEvent({ title: "Most Holy Place", label: "Judgment", bible: "Dan 8:14", description: "The Investigative Judgment.", spiritOfProphecy: "Christ's final work of judgment and the cleansing of the sanctuary." })} className="absolute top-1/2 -translate-y-1/2 h-10 bg-amber-500/10 border-2 border-amber-500/20 rounded-r-3xl flex items-center justify-center hover:bg-amber-500/30 transition-all cursor-pointer" style={{ left: `${getX(1844)}%`, width: `${getX(2150) - getX(1844)}%` }}><span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Most Holy Place</span></button>
+               </div>
+            </div>
+
+            {/* 3. THREE ANGELS TRACK */}
+            <div className="p-8 border-b border-slate-800 bg-slate-900/20">
+               <div className="flex justify-between items-center mb-6">
+                  <div><h2 className="text-2xl font-black text-blue-400 uppercase tracking-tighter">Three Angels' Messages</h2><p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">The Final Warning Sequence</p></div>
+                  <div className="bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-full flex items-center gap-2"><ThreeAngelsIcon size={14} className="text-blue-400"/><span className="text-[10px] font-black uppercase text-blue-400">Track</span></div>
+               </div>
+               <div className="relative h-48">
+                  {angelMessages.map(angel => {
+                     const verticalPos = angel.trackPos === 'top' ? 'top-[5%]' : angel.trackPos === 'mid' ? 'top-[35%]' : 'top-[65%]';
+                     return (
+                       <button 
+                         key={angel.id} 
+                         onClick={() => setSelectedEvent({ title: angel.name, label: "Angelic Warning", bible: angel.bible, description: angel.desc, spiritOfProphecy: angel.egw, egwLink: angel.link })}
+                         className={`absolute ${verticalPos} h-12 border-2 rounded-2xl flex items-center justify-center transition-all cursor-pointer px-6 z-20
+                           ${angel.color === 'blue' ? 'bg-blue-600/20 border-blue-500/40 text-blue-300 hover:bg-blue-600/40 shadow-lg' : 
+                             angel.color === 'amber' ? 'bg-amber-600/20 border-amber-500/40 text-amber-300 hover:bg-amber-600/40 shadow-lg' : 
+                             'bg-red-600/20 border-red-500/40 text-red-300 hover:bg-red-600/40 shadow-lg'}`}
+                         style={{ left: `${getX(angel.start)}%`, width: `${getX(angel.end) - getX(angel.start)}%` }}
+                       >
+                         <span className="text-xs font-black uppercase tracking-[0.2em] whitespace-nowrap">{angel.name}</span>
+                       </button>
+                     );
+                  })}
+                  <div className="absolute top-0 bottom-0 w-px bg-slate-800 border-l border-dashed border-slate-700" style={{ left: `${getX(1844)}%` }}></div>
+               </div>
+            </div>
+
+            {/* 4. HISTORICIST ALIGNMENT MAP - STAGGERED CHURCHES */}
+            <div className="p-8 bg-slate-900/30">
+               <div className="flex justify-between items-center mb-6">
+                  <div><h2 className="text-2xl font-black text-emerald-500 uppercase tracking-tighter">Historicist Alignment</h2><p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Eras</p></div>
+                  <div className="bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-full flex items-center gap-2 shadow-lg"><Layers size={14} className="text-emerald-500"/><span className="text-[10px] font-black uppercase">Eras</span></div>
+               </div>
+               <div className="relative" style={{ height: '300px' }}>
+                  {/* Church Eras - STAGGERED VERTICALLY */}
+                  {churchEras.map((era, idx) => {
+                     const staggeredTop = (idx % 2 === 0) ? '10px' : '50px';
+                     return (
+                        <button key={era.name} onClick={() => setSelectedEvent({ title: era.name, label: "Church Era", bible: era.bible, description: era.desc, spiritOfProphecy: era.egw })} className="absolute h-8 bg-emerald-500/10 border border-emerald-500/30 rounded-lg flex items-center justify-center hover:bg-emerald-500/30 transition-all z-10 text-[9px] font-black text-emerald-400 uppercase px-2 truncate" style={{ left: `${getX(era.start)}%`, width: `${getX(era.end) - getX(era.start)}%`, top: staggeredTop }}>{era.name}</button>
+                     );
+                  })}
+                  
+                  {/* Seal Eras */}
+                  {sealEras.map(era => (
+                     <button key={era.name} onClick={() => setSelectedEvent({ title: era.name, label: era.label, bible: era.bible, description: "Historical Seal Movement", spiritOfProphecy: era.egw })} className="absolute h-8 bg-rose-500/10 border border-rose-500/30 rounded-lg flex items-center justify-center hover:bg-rose-500/30 transition-all z-10 text-[9px] font-black text-rose-400 uppercase px-2 truncate" style={{ left: `${getX(era.start)}%`, width: `${getX(era.end) - getX(era.start)}%`, top: '110px' }}>{era.label}</button>
+                  ))}
+                  
+                  {/* Trumpet Eras */}
+                  {trumpetEras.map(era => (
+                     <button key={era.name} onClick={() => setSelectedEvent({ title: era.name, label: era.label, bible: era.bible, description: "Trumpet Judgment", spiritOfProphecy: era.egw })} className="absolute h-8 bg-indigo-500/10 border border-indigo-500/30 rounded-lg flex items-center justify-center hover:bg-indigo-500/30 transition-all z-10 text-[9px] font-black text-indigo-400 uppercase px-2 truncate" style={{ left: `${getX(era.start)}%`, width: `${getX(era.end) - getX(era.start)}%`, top: '210px' }}>{era.label}</button>
+                  ))}
+               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 5. VIALS TRACK */}
+        <div className="p-8 bg-gradient-to-b from-red-950/20 to-slate-950 border-t border-slate-800">
+           <div className="flex justify-between items-center mb-12">
+              <div><h2 className="text-2xl font-black text-red-600 uppercase tracking-tighter">The Seven Vials</h2><p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Consecutive Judgments</p></div>
+           </div>
+           
+           <div className="overflow-x-auto custom-scrollbar pb-6">
+              <div className="flex items-center gap-6 min-w-max px-4">
+                 {plagueData.map((p, idx) => {
+                   const IconComp = p.icon;
+                   return (
+                     <button 
+                        key={p.id} 
+                        onClick={() => setSelectedEvent(p)} 
+                        className="flex flex-col items-center gap-4 group w-32"
+                     >
+                        <div className="relative p-6 bg-slate-900 border-2 border-red-600/50 rounded-[2rem] hover:scale-110 hover:border-red-500 transition-all shadow-xl group-active:scale-95">
+                           <IconComp size={32} className="text-red-500" />
+                           <div className="absolute -top-3 -right-3 bg-red-600 text-white text-[10px] font-black w-8 h-8 rounded-full flex items-center justify-center border-4 border-slate-950">
+                              {idx + 1}
+                           </div>
+                        </div>
+                        <div className="text-center">
+                           <span className="text-[9px] font-black text-red-500 uppercase tracking-widest block">{p.label}</span>
+                           <span className="text-[8px] font-bold text-slate-500 uppercase leading-tight truncate w-24 block mt-1">{p.title}</span>
+                        </div>
+                     </button>
+                   );
+                 })}
+              </div>
+           </div>
+        </div>
+      </div>
+    </main>
+  );
+
+  const renderDecoder = () => {
+    const filtered = symbolDecoder.filter(s => 
+      s.symbol.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      s.meaning.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    return (
+      <main className="h-full p-8 max-w-7xl mx-auto overflow-y-auto custom-scrollbar animate-in fade-in pb-32">
+         <div className="flex flex-col md:flex-row justify-between items-center mb-12 border-b border-slate-800 pb-8 gap-6">
+            <div><h2 className="text-6xl font-black text-white uppercase tracking-tighter leading-none mb-2">Decoder</h2><p className="text-slate-500 text-xs font-black uppercase tracking-[0.4em] italic">Full Catalog Prophetic Keys</p></div>
+            <div className="relative w-full max-w-xs">
+               <input type="text" placeholder="Search 85+ symbols..." className="w-full bg-slate-900 border border-slate-800 p-4 rounded-2xl text-xs focus:border-amber-500 outline-none transition-all pl-12 shadow-2xl" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+               <Search size={18} className="absolute left-4 top-4 text-slate-600" />
+            </div>
+         </div>
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filtered.map((s, idx) => (
+              <div key={idx} className="bg-slate-900 border border-slate-800 p-7 rounded-[2rem] hover:border-amber-500 transition-all group flex flex-col justify-between shadow-lg relative overflow-hidden">
+                 <div>
+                    <div className="flex justify-between items-start mb-4"><h3 className="text-xl font-black text-white group-hover:text-amber-500 transition-colors uppercase tracking-tight leading-none">{s.symbol}</h3><span className="text-[7px] font-black uppercase bg-slate-800 border border-slate-700 px-2 py-1 rounded-full text-slate-500">{s.cat}</span></div>
+                    <p className="text-slate-300 text-sm leading-relaxed mb-6 italic border-l-2 border-slate-800 pl-4">{s.meaning}</p>
+                 </div>
+                 <a href={getBibleLink(s.bible)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-[10px] font-black text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-widest mt-auto border-t border-slate-800 pt-4"><Gavel size={14} /> Key: {s.bible.split(';')[0]}</a>
+              </div>
+            ))}
+         </div>
+      </main>
+    );
+  };
+
+  const renderSabbath = () => (
+    <main className="h-full p-8 max-w-7xl mx-auto overflow-y-auto custom-scrollbar animate-in fade-in pb-32">
+       <div className="flex justify-between items-end mb-12 border-b border-amber-900/30 pb-6">
+          <div>
+            <h2 className="text-4xl font-black text-white uppercase tracking-tighter flex items-center gap-4">
+               <Calendar className="text-amber-500" size={40} /> The Sabbath Hub
+            </h2>
+            <p className="text-slate-500 text-xs font-black uppercase tracking-[0.3em] mt-1 italic">The Seal of God & The Final Test</p>
+          </div>
+       </div>
+
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+          <button onClick={() => setSelectedEvent({ title: "Memorial of Creation", label: "The Origin", bible: "Genesis 2:1-3; Exodus 20:8-11", description: "The Sabbath was hallowed at creation as a perpetual memorial of God's power and ownership as the Creator of the universe.", spiritOfProphecy: "The Sabbath was hallowed at the creation. As ordained for man, it had its origin when 'the morning stars sang together.' - PP 48", egwLink: "https://m.egwwritings.org/en/book/132.1960#1960" })} className="bg-slate-900 p-8 rounded-[3rem] border border-slate-800 shadow-2xl hover:border-amber-500 transition-all text-left group">
+              <div className="flex items-center gap-4 mb-6"><div className="p-4 bg-amber-500 rounded-2xl text-slate-950 group-hover:scale-110 transition-transform"><Sun size={32} /></div><h3 className="text-xl font-black text-white uppercase">Creation</h3></div>
+              <p className="text-slate-400 text-sm leading-relaxed mb-8">Sanctified before sin as the original rest day of God's people.</p>
+              <div className="flex items-center text-amber-500 font-black text-xs uppercase tracking-[0.2em]">Study Creation <ChevronRight size={16}/></div>
+          </button>
+          <button onClick={() => setSelectedEvent({ title: "The Sign of Loyalty", label: "The Seal", bible: "Ezekiel 20:12, 20; Exodus 31:13-17", description: "The Sabbath is the specific sign between God and His people, containing His Name, Title, and Territory (Seal).", spiritOfProphecy: "The sign, or seal, of God is revealed in the observance of the seventh-day Sabbath, the Lord's memorial of creation. - TM 446", egwLink: getEGWLink(132, 2240) })} className="bg-slate-900 p-8 rounded-[3rem] border border-slate-800 shadow-2xl hover:border-blue-500 transition-all text-left group">
+              <div className="flex items-center gap-4 mb-6"><div className="p-4 bg-blue-600 rounded-2xl text-white group-hover:scale-110 transition-transform"><ShieldCheck size={32} /></div><h3 className="text-xl font-black text-white uppercase">The Seal</h3></div>
+              <p className="text-slate-400 text-sm leading-relaxed mb-8">The distinct identifier of those who worship the true Living God.</p>
+              <div className="flex items-center text-blue-400 font-black text-xs uppercase tracking-[0.2em]">Study the Sign <ChevronRight size={16}/></div>
+          </button>
+          <button onClick={() => setSelectedEvent({ title: "The Final Conflict", label: "The Great Test", bible: "Revelation 14:7-12; Revelation 13:15-17", description: "In the closing scenes, the Sabbath will be the point upon which the great final test of loyalty turns.", spiritOfProphecy: "The Sabbath will be the great test of loyalty... When the final test shall be brought to bear upon men, then the line of distinction will be drawn. - GC 605", egwLink: "https://m.egwwritings.org/en/book/132.2727#2727" })} className="bg-slate-900 p-8 rounded-[3rem] border border-slate-800 shadow-2xl hover:border-red-500 transition-all text-left group">
+              <div className="flex items-center gap-4 mb-6"><div className="p-4 bg-red-600 rounded-2xl text-white group-hover:scale-110 transition-transform"><Gavel size={32} /></div><h3 className="text-xl font-black text-white uppercase">Final Test</h3></div>
+              <p className="text-slate-400 text-sm leading-relaxed mb-8">The dividing line between the Mark of the Beast and the Seal of God.</p>
+              <div className="flex items-center text-red-500 font-black text-xs uppercase tracking-[0.2em]">Study Conflict <ChevronRight size={16}/></div>
+          </button>
+       </div>
+
+       <div className="space-y-6">
+          <div className="flex items-center gap-4 mb-8"><Library size={24} className="text-blue-400"/><h3 className="text-2xl font-black text-white uppercase tracking-widest">EGW Study Resources</h3><div className="h-px flex-1 bg-slate-800"></div></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+             {[
+                { title: "PP: Creation", url: "https://m.egwwritings.org/en/book/84.117#117", desc: "Chapter 2: The institution of the Sabbath in Eden." },
+                { title: "GC: God's Law Immutable", id: "132", segment: "1960", desc: "Chapter 25: The specific link to God's Law." },
+                { title: "GC: The Final Warning", id: "132", segment: "2727", desc: "Chapter 38: The Loud Cry and the last message." }
+             ].map((resource, rIdx) => (
+                <a key={rIdx} href={resource.url || getEGWLink(resource.id, resource.segment)} target="_blank" rel="noreferrer" className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl hover:bg-slate-800 hover:border-blue-500/50 transition-all flex flex-col justify-between group shadow-xl">
+                   <div><h4 className="font-black text-white text-sm group-hover:text-blue-400 transition-colors uppercase mb-2">{resource.title}</h4><p className="text-slate-500 text-xs leading-relaxed italic mb-4">{resource.desc}</p></div>
+                   <div className="flex items-center gap-2 text-[10px] font-black text-blue-400 uppercase tracking-widest">EGW Mobile <ExternalLink size={12}/></div>
+                </a>
+             ))}
+          </div>
+       </div>
+    </main>
+  );
+
+  const renderThreeAngelsHub = () => (
+    <main className="h-full p-8 max-w-7xl mx-auto overflow-y-auto custom-scrollbar animate-in fade-in pb-32">
+       <div className="flex justify-between items-end mb-12 border-b border-blue-900/30 pb-6">
+          <div><h2 className="text-4xl font-black text-white uppercase tracking-tighter flex items-center gap-4"><ThreeAngelsIcon className="text-blue-400" size={40} /> The Three Angels' Messages</h2><p className="text-slate-500 text-xs font-black uppercase tracking-[0.3em] mt-1 italic">God's Final Call to Humanity</p></div>
+       </div>
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+          <button onClick={() => setSelectedEvent({ title: "The First Angel", label: "The Hour of Judgment", bible: "Revelation 14:6-7", description: "Proclaiming the everlasting gospel and announcing that the hour of God's judgment is come.", spiritOfProphecy: "The first angel's message... was designed to separate the professed people of God from the corrupting influences of the world. - GC 379", egwLink: getEGWLink(132, 1714) })} className="bg-slate-900 p-8 rounded-[3rem] border border-slate-800 shadow-2xl hover:border-blue-500 transition-all text-left group">
+              <div className="flex items-center gap-4 mb-6"><div className="p-4 bg-blue-600 rounded-2xl text-white group-hover:scale-110 transition-transform"><Globe size={32} /></div><h3 className="text-xl font-black text-white uppercase">1st Message</h3></div>
+              <p className="text-slate-400 text-sm leading-relaxed mb-8">Fear God and give glory to Him; for the hour of His judgment is come.</p>
+              <div className="flex items-center text-blue-400 font-black text-xs uppercase tracking-[0.2em]">Explore Message <ChevronRight size={16}/></div>
+          </button>
+          <button onClick={() => setSelectedEvent({ title: "The Second Angel", label: "Babylon is Fallen", bible: "Revelation 14:8", description: "Announcing the moral fall of the popular churches due to their rejection of the first angel's message.", spiritOfProphecy: "The second angel's message... was first preached in the summer of 1844. - GC 389", egwLink: "https://m.egwwritings.org/en/book/14648.2#0" })} className="bg-slate-900 p-8 rounded-[3rem] border border-slate-800 shadow-2xl hover:border-amber-500 transition-all text-left group">
+              <div className="flex items-center gap-4 mb-6"><div className="p-4 bg-amber-500 rounded-2xl text-slate-950 group-hover:scale-110 transition-transform"><Skull size={32} /></div><h3 className="text-xl font-black text-white uppercase">2nd Message</h3></div>
+              <p className="text-slate-400 text-sm leading-relaxed mb-8">Babylon is fallen, is fallen, that great city, because she made all nations drink.</p>
+              <div className="flex items-center text-amber-500 font-black text-xs uppercase tracking-[0.2em]">Explore Message <ChevronRight size={16}/></div>
+          </button>
+          <button onClick={() => setSelectedEvent({ title: "The Third Angel", label: "The Final Warning", bible: "Revelation 14:9-12", description: "The most solemn warning ever addressed to mortals. It identifies the true remnant.", spiritOfProphecy: "The third angel's message... is to be the great final warning to be given to the world. - GC 604", egwLink: getEGWLink(132, 2727) })} className="bg-slate-900 p-8 rounded-[3rem] border border-slate-800 shadow-2xl hover:border-red-500 transition-all text-left group">
+              <div className="flex items-center gap-4 mb-6"><div className="p-4 bg-red-600 rounded-2xl text-white group-hover:scale-110 transition-transform"><AlertTriangle size={32} /></div><h3 className="text-xl font-black text-white uppercase">3rd Message</h3></div>
+              <p className="text-slate-400 text-sm leading-relaxed mb-8">If any man worship the beast and his image... the same shall drink of the wine of God's wrath.</p>
+              <div className="flex items-center text-red-500 font-black text-xs uppercase tracking-[0.2em]">Explore Message <ChevronRight size={16}/></div>
+          </button>
+       </div>
+    </main>
+  );
+
+  const renderAbout = () => (
+    <main className="h-full p-8 max-w-4xl mx-auto overflow-y-auto custom-scrollbar animate-in fade-in pb-32">
+       <div className="text-center mb-16"><div className="inline-block p-4 bg-amber-500/10 border border-amber-500/30 rounded-full mb-6"><Scroll className="text-amber-500" size={48} /></div><h2 className="text-5xl font-black text-white uppercase tracking-tighter mb-4">About The Remnant Study</h2><p className="text-slate-400 text-lg uppercase tracking-widest font-black italic">A Roadmap for the Final Days</p></div>
+       <div className="space-y-12">
+          <section className="bg-slate-900 border border-slate-800 p-10 rounded-[3rem] shadow-2xl flex flex-col md:flex-row items-center gap-10">
+             <div className="bg-white p-4 rounded-3xl shadow-xl"><img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://copperandcrimsom.com/" alt="Copper & Crimson QR" className="w-40 h-40" /></div>
+             <div className="text-center md:text-left flex-1"><h3 className="text-3xl font-black text-white uppercase tracking-tighter mb-3">Copper & Crimson</h3><p className="text-slate-400 text-sm leading-relaxed mb-6 italic">Scan to visit our primary outreach platform for additional truth-filled media.</p><a href="https://copperandcrimsom.com/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-blue-400 font-black uppercase tracking-widest text-xs hover:underline bg-blue-400/10 px-4 py-2 rounded-full border border-blue-400/20">Visit Website <ExternalLink size={14}/></a></div>
+          </section>
+          <section className="bg-slate-900/50 border border-slate-800 p-10 rounded-[3rem] shadow-2xl"><h3 className="text-2xl font-black text-amber-500 uppercase tracking-tight mb-6 flex items-center gap-3"><Target size={24}/> Our Mission</h3><p className="text-slate-200 text-lg leading-relaxed italic border-l-4 border-amber-500/50 pl-6">To provide a clear, interactive visual roadmap of prophetic history and the final crisis, grounded in the Historicist tradition and the unique message of the Seventh-day Adventist Church.</p></section>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem]"><h4 className="text-white font-black uppercase mb-4 flex items-center gap-2"><BookOpen size={20} className="text-blue-400"/> Sola Scriptura</h4><p className="text-slate-400 text-sm leading-relaxed">Every prophetic milestone and symbol within this app is rooted directly in the Word of God (KJV).</p></div>
+             <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem]"><h4 className="text-white font-black uppercase mb-4 flex items-center gap-2"><Flame size={20} className="text-rose-500"/> Spirit of Prophecy</h4><p className="text-slate-400 text-sm leading-relaxed">We utilize the insights given through the pen of Ellen G. White to clarify historical fulfillment.</p></div>
+          </div>
+          <section className="bg-rose-950/20 border border-rose-900/30 p-10 rounded-[4rem] text-center shadow-2xl">
+             <div className="inline-block p-4 bg-rose-500/10 rounded-full mb-6"><Heart className="text-rose-500 animate-pulse" size={48} fill="currentColor" /></div>
+             <h3 className="text-3xl font-black text-white uppercase tracking-tighter mb-4">Support the Mission</h3>
+             <p className="text-slate-300 text-sm mb-10 max-w-lg mx-auto">"The work of God in this earth can never be finished until the men and women comprising our church membership rally to the work."</p>
+             <a href="https://square.link/u/OOXgkZZs" target="_blank" rel="noreferrer" className="inline-block py-6 px-12 bg-[#008CFF] hover:bg-[#0074D4] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95">Support via Square</a>
+          </section>
+       </div>
+    </main>
+  );
+
+  const renderOutreach = () => {
+    const currentUrl = window.location.href;
+    const shareMsg = "Check out The Remnant Study - an interactive roadmap for prophetic history and the final crisis!";
+    return (
+      <main className="h-full p-8 max-w-4xl mx-auto overflow-y-auto custom-scrollbar animate-in fade-in flex flex-col items-center justify-center pb-32 text-center">
+         <div className="p-6 bg-blue-500/10 border border-blue-500/30 rounded-full mb-8"><Share2 className="text-blue-500" size={64} /></div>
+         <h2 className="text-5xl font-black text-white uppercase tracking-tighter mb-6">Share the Warning</h2>
+         <p className="text-slate-300 text-xl leading-relaxed mb-12 italic max-w-2xl">"Proclaim the message of the soon-coming Saviour to every nation, kindred, tongue, and people."</p>
+         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full max-w-2xl mb-12">
+            <button onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`, '_blank')} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl hover:border-blue-600 transition-all group flex flex-col items-center gap-3">
+               <Facebook className="text-slate-500 group-hover:text-blue-600" size={32} /><span className="text-[10px] font-black uppercase text-slate-500 group-hover:text-white">Facebook</span>
+            </button>
+            <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareMsg)}&url=${encodeURIComponent(currentUrl)}`, '_blank')} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl hover:border-blue-400 transition-all group flex flex-col items-center gap-3">
+               <Twitter className="text-slate-500 group-hover:text-blue-400" size={32} /><span className="text-[10px] font-black uppercase text-slate-500 group-hover:text-white">X / Twitter</span>
+            </button>
+            <button onClick={() => window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareMsg + " " + currentUrl)}`, '_blank')} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl hover:border-green-500 transition-all group flex flex-col items-center gap-3">
+               <MessageSquare className="text-slate-500 group-hover:text-green-500" size={32} /><span className="text-[10px] font-black uppercase text-slate-500 group-hover:text-white">WhatsApp</span>
+            </button>
+            <button onClick={() => window.open(`mailto:?subject=${encodeURIComponent("Remnant Study Resource")}&body=${encodeURIComponent(shareMsg + "\n\n" + currentUrl)}`, '_blank')} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl hover:border-amber-500 transition-all group flex flex-col items-center gap-3">
+               <Mail className="text-slate-500 group-hover:text-amber-500" size={32} /><span className="text-[10px] font-black uppercase text-slate-500 group-hover:text-white">Email</span>
+            </button>
+         </div>
+         <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] w-full max-w-lg">
+            <h3 className="text-white font-black uppercase text-xs tracking-widest mb-4">Copy Direct Link</h3>
+            <div className="flex gap-2">
+               <div className="flex-1 bg-slate-950 border border-slate-800 p-4 rounded-xl text-slate-500 text-xs truncate overflow-hidden text-left">{currentUrl}</div>
+               <button onClick={() => copyToClipboard(currentUrl)} className="bg-blue-600 hover:bg-blue-500 p-4 rounded-xl text-white transition-all shadow-lg active:scale-95 flex items-center justify-center min-w-[60px]">{showCopyFeedback ? <ShieldCheck size={20} /> : <LinkIcon size={20} />}</button>
+            </div>
+         </div>
+      </main>
+    );
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
+      <header className="p-6 bg-slate-900 border-b border-slate-800 flex justify-between items-center z-50 shadow-2xl">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-amber-500 rounded-2xl shadow-lg shadow-amber-500/20 animate-pulse"><Clock className="text-slate-950" size={24}/></div>
+          <div><h1 className="font-black text-2xl uppercase tracking-tighter leading-none text-white">The Remnant Study</h1><span className="text-[10px] font-black text-slate-500 uppercase mt-1 block">{version}</span></div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setViewMode('share')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'share' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}><Share2 size={20} /></button>
+          <button onClick={() => setViewMode('about')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'about' ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}><Info size={20} /></button>
+        </div>
+      </header>
+
+      <div className="flex-1 relative overflow-hidden bg-gradient-to-b from-slate-950 to-slate-900">
+        {viewMode === 'timeline' && renderTimeline()}
+        {viewMode === 'decoder' && renderDecoder()}
+        {viewMode === 'messages' && renderThreeAngelsHub()}
+        {viewMode === 'sanctuary' && renderSabbath()}
+        {viewMode === 'about' && renderAbout()}
+        {viewMode === 'share' && renderOutreach()}
+      </div>
+
+      <nav className="p-5 bg-slate-900 border-t border-slate-800 flex justify-around items-center z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+        {[
+          { id: 'timeline', label: 'Timeline', icon: Layout },
+          { id: 'sanctuary', label: 'Sabbath', icon: Calendar },
+          { id: 'decoder', label: 'Symbols', icon: ShieldCheck },
+          { id: 'messages', label: 'Messages', icon: ThreeAngelsIcon }
+        ].map(n => {
+          const NavIcon = n.icon;
+          return (
+            <button key={n.id} onClick={() => setViewMode(n.id)} className={`flex flex-col items-center gap-1.5 transition-all active:scale-90 ${viewMode === n.id ? 'text-amber-500 scale-110' : 'text-slate-500 hover:text-slate-300'}`}>
+              <NavIcon size={26} />
+              <span className="text-[9px] font-black uppercase tracking-widest">{n.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {selectedEvent && (
+        <div className="fixed inset-0 bg-black/98 z-[100] flex items-center justify-center p-4 backdrop-blur-xl">
+           <div className="bg-slate-900 border border-amber-500/30 rounded-[3rem] w-full max-w-xl shadow-[0_0_100px_rgba(245,158,11,0.15)] overflow-hidden animate-in zoom-in-95 duration-300">
+             <div className="p-10 border-b border-slate-800 flex justify-between items-center bg-gradient-to-r from-slate-950 to-slate-900 text-white">
+                <div><h2 className="text-4xl font-black uppercase tracking-tighter leading-none">{selectedEvent.title}</h2><p className="text-xs text-amber-500 font-black mt-3 uppercase tracking-[0.3em]">{selectedEvent.label || 'Prophetic Insight'}</p></div>
+                <button onClick={() => setSelectedEvent(null)} className="p-3 bg-slate-800 hover:bg-red-500/20 rounded-full transition-colors"><X size={32}/></button>
+             </div>
+             <div className="p-10 space-y-10 overflow-y-auto max-h-[70vh] custom-scrollbar">
+                <div className="flex flex-col gap-4">
+                   <div className="flex items-center justify-between"><span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Scripture Base</span><a href={getBibleLink(selectedEvent.bible || "Revelation")} target="_blank" rel="noreferrer" className="text-xs text-blue-400 font-black hover:underline flex items-center gap-2 border border-blue-400/20 px-4 py-2 rounded-full">Explore {selectedEvent.bible || "Bible"} <ExternalLink size={14}/></a></div>
+                   {selectedEvent.egwLink && (
+                      <div className="flex items-center justify-between"><span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Spirit of Prophecy</span><a href={selectedEvent.egwLink} target="_blank" rel="noreferrer" className="text-xs text-amber-500 font-black hover:underline flex items-center gap-2 border border-blue-400/20 px-4 py-2 rounded-full">Read Full Context <ExternalLink size={14}/></a></div>
+                   )}
+                </div>
+                <p className="text-slate-100 text-xl leading-relaxed font-medium border-l-4 border-amber-500 pl-8">{selectedEvent.description}</p>
+                <div className="bg-slate-800/40 p-10 rounded-[2.5rem] border border-slate-700 italic text-slate-300 font-serif leading-relaxed relative text-lg shadow-inner"><div className="absolute -top-4 left-8 bg-slate-900 px-3 py-1 rounded-full border border-slate-700 text-[10px] font-black text-blue-400 uppercase tracking-widest">Spirit of Prophecy</div>"{selectedEvent.spiritOfProphecy}"</div>
+             </div>
+           </div>
+        </div>
+      )}
+
+      <style dangerouslySetInnerHTML={{ __html: `.custom-scrollbar::-webkit-scrollbar { width: 4px; } .custom-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }` }} />
+    </div>
+  );
+};
+
+export default App;
